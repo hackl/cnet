@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py 
 # Creation  : 11 Apr 2018
-# Time-stamp: <Fre 2018-05-04 16:57 juergen>
+# Time-stamp: <Sam 2018-05-05 11:09 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -34,40 +34,6 @@ from collections import OrderedDict, defaultdict
 from cnet import config, logger
 from cnet.utils.exceptions import CnetError
 log = logger(__name__)
-
-
-class OrderedEdgeDict(OrderedDict):
-    def index(self,idx):
-        return list(OrderedDict(self).keys()).index(idx)
-
-    def iter(self, nodes=False, data=False):
-        for key,value in OrderedDict(self).items():
-            if nodes and data:
-                yield (key, value.u.id, value.v.id, value.attributes)
-            elif nodes and not data:
-                yield (key, value.u.id, value.v.id)
-            elif not nodes and data:
-                yield (key, value.attributes)
-            else:
-                yield key
-
-class OrderedNodeDict(OrderedDict):
-    def index(self,idx):
-        return list(OrderedDict(self).keys()).index(idx)
-
-    def iter(self,data=False):
-        for key,value in OrderedDict(self).items():
-            if data:
-                yield (key, value.attributes)
-            else:
-                yield key
-    @property
-    def last(self):
-        return next(reversed(OrderedDict(self)))
-
-    @property
-    def first(self):
-        return next(iter(OrderedDict(self)))
 
 class Network(object):
     """ Base class for networks.
@@ -818,14 +784,82 @@ class Network(object):
         return sparse.coo_matrix((data, (row, col)), shape=shape).tocsr()
 
     def degree(self, nodes=None, weight=None, mode='out'):
+        """Returns the node degrees.
 
+        The node degree is the number of edges adjacent to the node.
+        The weighted node degree is the sum of the edge weights for
+        edges incident to that node.
+
+        Parameters
+        ----------
+        nodes : list of node ids, or all nodes (default = all nodes)
+            The parameter nodes must be a list with node ids. If not, the degree
+            of all nodes is considered.
+
+        weight: bool, str or None, optional (default = None)
+            The weight parameter defines which attribute is used as weight. Per
+            default an un-weighted network is used, i.e. None or False is chosen,
+            the weight will be 1.0. Any other attribute of the edge can be
+            used as a weight. Hence if set to None or False, the function
+            returns un-weighted node degrees. If set to True, or any other
+            attribute, the node degree entries will be weighted.
+
+        mode : string ('out' or 'in'), optional (default = 'out')
+            If the network is directed, either the in degree or out degree can
+            be calculated. Thereby:
+
+            The node in degree is the number of edges pointing to the node.
+            The weighted node degree is the sum of the edge weights for
+            edges incident to that node.
+
+            The node out_degree is the number of edges pointing out of the node.
+            The weighted node degree is the sum of the edge weights for
+            edges incident to that node.
+
+
+        Returns
+        -------
+        degrees : dict
+            If more then a single degree is requested, a dictionary with the
+            node degrees will be returned, where the key is the node id and the
+            value the (un) weighted degree.
+
+        OR
+
+        degree : int
+            If only the degree of a single node is requested, this note degree
+            will be returned.
+
+        Examples
+        --------
+        >>> net = cn.Network(directed = True)
+        >>> net.add_edges_from([('ab','a','b'),('cb','c','b'),('bd','b','d')])
+        >>> net.degree() # calculate the out degree
+        {'b': 1.0, 'a': 1.0, 'c': 1.0, 'd': 0.0}
+        >>> net.degree(mode='in)
+        {'c': 0.0, 'b': 2.0, 'd': 1.0, 'a': 0.0}
+        >>> net.degree('b')
+        1.0
+
+        Weighted degree
+
+        >>> net.edges['ab']['weight'] = 2
+        >>> net.degree(['a','b'],weight=True)
+        {'a': 2.0, 'b': 1.0}
+
+        >>>net.degree(['a','b'],mode='in',weight=True)
+        {'a': 0.0, 'b': 3.0}
+
+        """
+        if mode != 'out' and mode != 'in':
+            log.warn('Mode "{}" is not supported. Only the modes "out"'
+                     ' and "in" are supported! User input was ignored and'
+                     ' default option "out" was calculated.'.format(mode))
+            mode = 'out'
         if mode == 'out':
             _degree = self.adjacency_matrix(weight=weight).sum(axis=1)
-        elif mode == 'in':
-            _degree = self.adjacency_matrix(weight=weight).sum(axis=0).T
         else:
-            log.error('Mode "{}" is not supported. Only the modes "out"'
-                      ' and "in" are supported.'.format(mode))
+            _degree = self.adjacency_matrix(weight=weight).sum(axis=0).T
 
         # check if given nodes is a single node
         if nodes is not None and not isinstance(nodes,list):
@@ -840,28 +874,93 @@ class Network(object):
         return {nodes[i]:_degree.item(i) for i in idx}
 
     def transition_matrix(self,weight=None):
+        """Returns a transition matrix of the network.
+
+        The transition matrix is the matrix
+
+        .. math::
+
+            T = 1/D * A
+
+        where `D` is a matrix with the node out degrees on the diagonal and `A`
+        is the adjacency matrix of the network.
+
+        Parameters
+        ----------
+        weight : string or None, optional (default=None)
+           The name of an edge attribute that holds the numerical value used
+           as a weight.  If None or False, then each edge has weight 1.
+
+        Returns
+        -------
+        transition_matrix : scipy.sparse.coo_matrix
+            Returns the transition matrix, corresponding to the network.
+
+        """
         A = self.adjacency_matrix(weight=weight)
         D = sparse.diags(1/A.sum(axis=1).A1)
         return D*A
 
 
-    def laplacian_matrix(self):
+    def laplacian_matrix(self,weight=None):
         """
-        Returns the transposed normalized Laplacian matrix corresponding to the network.
+        Returns the transposed normalized Laplacian matrix.
+
+        The transposed normalized Laplacian is the matrix
+
+        .. math::
+
+            N = I - T
+
+        where `I` is the identity matrix and `T` the transition matrix.
 
         Parameters
         ----------
+        weight : string or None, optional (default=None)
+           The name of an edge attribute that holds the numerical value used
+           as a weight.  If None or False, then each edge has weight 1.
 
         Returns
         -------
+        laplacian_matrix : scipy.sparse.coo_matrix
+            Returns the transposed normalized Laplacian matrix, corresponding to
+            the network.
 
         """
-        T = self.transition_matrix()
+        T = self.transition_matrix(weight=weight)
         I = sparse.identity(self.number_of_nodes())
 
         return I - T
 
     def save(self,filename,format=None):
+        """Save the network to file.
+
+        Note
+        ----
+        Currently only the export to a pickle file is supported. Where pickles
+        are a serialized byte stream of a Python object [1]_. This format will
+        preserve Python objects used as nodes or edges.
+
+        Parameters
+        ----------
+        filename : file or string
+            File or filename to save. File ending such as '.pkl' is not
+            necessary and will be added automatically if missing.
+
+        format : string, optional (default = None)
+            Format as which the network should be saved.
+
+        Examples
+        --------
+        >>> net = cn.Network()
+        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')])
+        >>> net.save('my_network')
+
+        References
+        ----------
+        .. [1] https://docs.python.org/3/library/pickle.html
+
+        """
         if format is None:
             # check file ending and add .pkl if missing
             if not filename.endswith('.pkl'):
@@ -875,6 +974,39 @@ class Network(object):
 
     @classmethod
     def load(cls,filename,format=None):
+        """Load network from a file.
+
+        Note
+        ----
+        Currently only the import from a pickle file is supported. Where pickles
+        are a serialized byte stream of a Python object [1]_. This format will
+        preserve Python objects used as nodes or edges.
+
+        Parameters
+        ----------
+        filename : file or string
+            File or filename to load. File ending such as '.pkl' is not
+            necessary and will be added automatically if missing.
+
+        format : string, optional (default = None)
+            Format of the network file.
+
+        Returns
+        -------
+        network : Network
+            Returns a cnet network.
+
+        Examples
+        --------
+        >>> net_1 = cn.Network()
+        >>> net_1.save('my_network')
+        >>> net_2 = Network.load('my_network')
+
+        References
+        ----------
+        .. [1] https://docs.python.org/3/library/pickle.html
+
+        """
         if format is None:
             # check file ending and add .pkl if missing
             if not filename.endswith('.pkl'):
@@ -892,11 +1024,175 @@ class Network(object):
             raise AttributeError
 
     def copy(self):
-        """Return a copy of the network."""
+        """Return a copy of the network.
+
+        Returns
+        -------
+        net : Network
+            A copy of the network.
+
+        Examples
+        --------
+        >>> net_1 = cn.Network()
+        >>> net_2 = net_1.copy()
+
+        """
         return deepcopy(self)
 
     def has_path(self,path):
         pass
+
+
+class OrderedEdgeDict(OrderedDict):
+    """An extended class of OrderedDict to save the edges."""
+    def index(self,idx):
+        """Returns the list index of an edge.
+
+        Parameters
+        ----------
+        index : edge id
+            The index is the identifier (id) for the edge. Every edge
+            should have a unique id. The id has to be a string value.
+
+        Returns
+        -------
+        index : integer
+            the index in the list, where the edge object is stored.
+
+        Examples
+        --------
+        >>> net = cn.Network()
+        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')])
+        >>> net.edges.index('ab')
+        0
+
+        """
+        return list(OrderedDict(self).keys()).index(idx)
+
+    def iter(self, nodes=False, data=False):
+        """Returns an iterator over all edges.
+
+        Parameters
+        ----------
+        nodes : bool, optional (default = False)
+            If true the edge id and the associate node ids are in the iterator.
+
+        data : bool, optional (default = False)
+            If true the attributes associated with the edge are in the iterator.
+
+        Returns
+        -------
+        edge_iter : iterator
+            An iterator over all edges in the network with their associated
+            nodes and/or attributes.
+
+        Examples
+        --------
+        >>> net = cn.Network()
+        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')],length = 5)
+        >>> for e in net.edges.iter():
+        >>>    print(e)
+        ab, Edge ab
+        ab, Edge bc
+
+        With nodes.
+
+        >>> for e in net.edges.iter(nodes=True):
+        >>>    print(e)
+        ab, a, b
+        bc, b, c
+
+        with nodes and attributes
+
+        >>> for e in net.edges.iter(nodes=True, data=True):
+        >>>    print(e)
+        ab, a, b, {length = 5}
+        bc, b, c, {length = 5}
+
+        """
+        for key,value in OrderedDict(self).items():
+            if nodes and data:
+                yield (key, value.u.id, value.v.id, value.attributes)
+            elif nodes and not data:
+                yield (key, value.u.id, value.v.id)
+            elif not nodes and data:
+                yield (key, value.attributes)
+            else:
+                yield key,value
+
+class OrderedNodeDict(OrderedDict):
+    """An extended class of OrderedDict to save the nodes."""
+    def index(self,idx):
+        """Returns the list index of a node.
+
+        Parameters
+        ----------
+        index : node id
+            The index is the identifier (id) for the node. Every node
+            should have a unique id. The id has to be a string value.
+
+        Returns
+        -------
+        index : integer
+            the index in the list, where the node object is stored.
+
+        Examples
+        --------
+        >>> net = cn.Network()
+        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')])
+        >>> net.nodes.index('b')
+        1
+
+        """
+        return list(OrderedDict(self).keys()).index(idx)
+
+    def iter(self,data=False):
+        """Returns an iterator over all nodes.
+
+        Parameters
+        ----------
+        data : bool, optional (default = False)
+            If true the attributes associated with the nodes are in the iterator.
+
+        Returns
+        -------
+        node_iter : iterator
+            An iterator over all nodes in the network, with their associated
+            attributes.
+
+        Examples
+        --------
+        >>> net = cn.Network()
+        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')],length = 5)
+        >>> for n in net.nodes.iter():
+        >>>    print(n)
+        a, Node a
+        b, Node b
+        c, Node c
+
+        With attributes
+
+        >>> for n in net.edges.iter(data=True):
+        >>>    print(n)
+        a, {}
+        b, {}
+        c, {}
+
+        """
+        for key,value in OrderedDict(self).items():
+            if data:
+                yield (key, value.attributes)
+            else:
+                yield key
+    @property
+    def last(self):
+        """Returns the last node added to the network"""
+        return next(reversed(OrderedDict(self)))
+
+    @property
+    def first(self):
+        """Returns the first node added to the network"""
+        return next(iter(OrderedDict(self)))
 
 class Edge(object):
     """Base class for an edge.
@@ -923,7 +1219,7 @@ class Edge(object):
     attr : keyword arguments, optional (default= no attributes)
         Attributes to add to edge as key=value pairs.
 
-    Properties
+    Attributes
     ----------
     id : str
         Unique identifier for the edge. This property can only be called and not
@@ -1251,7 +1547,7 @@ class Node(object):
     attr : keyword arguments, optional (default= no attributes)
         Attributes to add to node as key=value pairs.
 
-    Properties
+    Attributes
     ----------
     id : str
         Unique identifier for the node. This property can only be called and not

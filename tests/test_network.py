@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_paths.py 
 # Creation  : 29 Mar 2018
-# Time-stamp: <Fre 2018-05-04 17:07 juergen>
+# Time-stamp: <Sam 2018-05-05 10:41 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -115,9 +115,9 @@ def test_edge():
     with pytest.raises(Exception):
         a = cd['attribute not in dict']
 
-@pytest.fixture
-def net():
-    net = Network(directed=False)
+@pytest.fixture(params=[True,False])
+def net(request):
+    net = Network(directed=request.param)
     net.add_edge('ab','a','b')
     net.add_edge('bc','b','c')
     net.add_edge('cd','c','d')
@@ -290,45 +290,29 @@ def test_weights(net):
 
 def test_adjacency_matrix(net):
     adj = net.adjacency_matrix()
-    print(adj.todense())
-    pass
 
-def test_degree(net):
-    pass
+    assert adj.shape == (net.number_of_nodes(),net.number_of_nodes())
+
+def test_degree():
+    net = Network(directed = True)
+    net.add_edges_from([('ab','a','b'),('cb','c','b'),('bd','b','d')])
+
+    assert sum(net.degree().values()) == 3
+    assert net.degree('b',mode='in') == 2
+    assert net.degree(['a','b'])['a'] == 1
+
+    net.edges['ab']['weight'] = 2
+
+    assert net.degree(['a','b'],weight=True)['a'] == 2
+    assert net.degree(['a','b'],mode='in',weight=True)['b'] == 3
+
+    assert net.degree(['a','b'],mode='no valid mode',weight=True)['b'] == 1
 
 def transition_matrix(net):
     pass
 
 def laplacian_matrix(net):
     pass
-
-test_node()
-test_edge()
-test_network()
-
-test_edge_to_nodes_map(net())
-test_node_to_edges_map(net())
-test_nodes_to_edges_map(net())
-
-test_add_node()
-test_add_nodes_from()
-test_remove_node(net())
-test_remove_nodes_from(net())
-test_has_node(net())
-
-test_add_edge()
-test_add_edges_from()
-test_remove_edge(net())
-test_remove_edges_from(net())
-test_has_edge(net())
-test_weights(net())
-
-test_adjacency_matrix(net())
-test_degree(net())
-transition_matrix(net())
-laplacian_matrix(net())
-
-
 
 # =============================================================================
 # eof
