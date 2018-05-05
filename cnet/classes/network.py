@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py 
 # Creation  : 11 Apr 2018
-# Time-stamp: <Sam 2018-05-05 11:09 juergen>
+# Time-stamp: <Sam 2018-05-05 15:21 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -58,7 +58,7 @@ class Network(object):
         An optional name for the network.
 
     attr : keyword arguments, optional (default= no attributes)
-        Attributes to add to network as key=value pairs.
+        Attributes to add to the network as key=value pairs.
 
     Examples
     --------
@@ -106,6 +106,9 @@ class Network(object):
 
     >>> net.remove_nodes_from(['a','b'])
 
+    **Edges**
+
+
     See Also
     --------
     SpatialNetwork
@@ -137,10 +140,10 @@ class Network(object):
         # add attributes to the network
         self.attributes.update(attr)
 
-        # an ordered dictionary containing nodes objects
+        # an ordered dictionary containing node objects
         self.nodes = OrderedNodeDict()
 
-        # an ordered dictionary containing edges objects
+        # an ordered dictionary containing edge objects
         self.edges = OrderedEdgeDict()
 
         # Classes of the Node and Edge objects
@@ -206,7 +209,7 @@ class Network(object):
         Parameters
         ----------
         attr : keyword arguments, optional (default= no attributes)
-            Attributes to add or update for the edge as key=value pairs.
+            Attributes to add or update for the network as key=value pairs.
 
         Examples
         --------

@@ -1,9 +1,9 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : test_paths.py 
+# File      : test_network.py 
 # Creation  : 29 Mar 2018
-# Time-stamp: <Sam 2018-05-05 10:41 juergen>
+# Time-stamp: <Sam 2018-05-05 12:54 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch

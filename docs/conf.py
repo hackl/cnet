@@ -42,11 +42,33 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
-    #'sphinx_gallery.gen_gallery',
+    'sphinx_gallery.gen_gallery',
     #'nb2plots',
     #'texext',
 ]
 
+
+sphinx_gallery_conf = {
+    # path to your examples scripts
+    # 'examples_dirs': '../examples',
+    # 'subsection_order': ExplicitOrder(['../examples/basic',
+    #                                    '../examples/drawing',
+    #                                    '../examples/graph',
+    #                                    '../examples/algorithms',
+    #                                    '../examples/advanced',
+    #                                    '../examples/3d_drawing',
+    #                                    '../examples/pygraphviz',
+    #                                    '../examples/javascript',
+    #                                    '../examples/jit',
+    #                                    '../examples/subclass']),
+    # # path where to save gallery generated examples
+    # 'gallery_dirs': 'auto_examples',
+    'backreferences_dir': 'modules/generated',
+ #   'expected_failing_examples': ['../examples/advanced/plot_parallel_betweenness.py']
+}
+
+# generate autosummary pages
+autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']

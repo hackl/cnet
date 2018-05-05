@@ -103,3 +103,5 @@ ENV/
 # directories
 log/
 .pytest_cache/
+generated/
+auto_examples/

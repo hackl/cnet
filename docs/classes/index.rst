@@ -18,7 +18,8 @@ Contents:
    node
    edge
    network
-
+   path
+   paths
 
 Indices and tables
 ==================
