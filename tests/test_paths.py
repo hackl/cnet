@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_paths.py
 # Creation  : 29 Mar 2018
-# Time-stamp: <Sam 2018-05-05 15:55 juergen>
+# Time-stamp: <Son 2018-05-06 08:57 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -31,8 +31,8 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import cnet
-from cnet.classes.network import Node, Edge
-from cnet.classes.paths import Path, Paths
+from cnet import Node, Edge
+from cnet import Path, Paths
 
 def test_path():
     """ Test basic functionalists of the path class."""

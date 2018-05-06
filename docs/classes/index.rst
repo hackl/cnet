@@ -15,11 +15,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   node
-   edge
-   network
-   path
-   paths
+   network/index
+   spatial_network/index
+   paths/index
 
 Indices and tables
 ==================

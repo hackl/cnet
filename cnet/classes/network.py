@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py 
 # Creation  : 11 Apr 2018
-# Time-stamp: <Sam 2018-05-05 15:21 juergen>
+# Time-stamp: <Son 2018-05-06 11:57 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -108,6 +108,15 @@ class Network(object):
 
     **Edges**
 
+    Adding a singe new edge to the network.
+
+    >>> net = cn.Network()
+    >>> net.add_edge('ab','a','b', length = 10)
+
+    Adding an existing edge object to the network.
+
+    >>> e = cn.Edge('bc','b','c', length = 5)
+    >>> net.add_edge(e)
 
     See Also
     --------
@@ -1207,13 +1216,13 @@ class Edge(object):
         have a unique id. The id is converted to a string value and is used as a
         key value for all dict which saving edge objects.
 
-    u : node id or Node
+    u : node id or py:class:`Node`
         This parameter defines the origin of the edge (if directed), i.e. u->v.
-        A node id can be entered, in this case a new Node will be created 
+        A node id can be entered, in this case a new Node will be created
         (see py:class:Node), also an existing node can be used, here the
         attributes and properties of the node objects are used.
 
-    v : node id or Node
+    v : node id or py:class:`Node`
         This parameter defines the destination of the edge (if directed)
         i.e. u->v. A node id can be entered, in this case a new Node will be
         created (see py:class:Node), also an existing node can be used, here the
@@ -1228,11 +1237,11 @@ class Edge(object):
         Unique identifier for the edge. This property can only be called and not
         set or modified!
 
-    u : Node
+    u : py:class:`Node`
         Origin node of the edge. This property can only be called and not set or
         modified!
 
-    v : Node
+    v : py:class:`Node`
         Destination node of the edge. This property can only be called and not
         set or modified!
 
@@ -1564,7 +1573,7 @@ class Node(object):
 
     Get the id of the node.
 
-    >>>u.id
+    >>> u.id
     u
 
     Create a node with attached attribute.

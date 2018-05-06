@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : paths.py 
 # Creation  : 29 Mar 2018
-# Time-stamp: <Sam 2018-05-05 16:13 juergen>
+# Time-stamp: <Son 2018-05-06 12:08 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -717,24 +717,6 @@ class Paths(object):
         # add attributes to the paths
         self.attributes.update(attr)
 
-    def update(self,**attr):
-        """Update the attributes of the paths.
-
-        Parameters
-        ----------
-        attr : keyword arguments, optional (default= no attributes)
-            Attributes to add or update for the paths as key=value pairs.
-
-        Examples
-        --------
-        Update attributes.
-
-        >>> P = nc.Paths(type = 'road travelers')
-        >>> P.update(type = 'rail travelers', location = 'Swizerland')
-
-        """
-        self.attributes.update(attr)
-
     @property
     def name(self):
         """Return the name of the paths if defined, else an empty space."""
@@ -765,6 +747,24 @@ class Paths(object):
     def __iter__(self):
         """Iterating trough the path objects."""
         return (path for path in self.paths)
+
+    def update(self,**attr):
+        """Update the attributes of the paths.
+
+        Parameters
+        ----------
+        attr : keyword arguments, optional (default= no attributes)
+            Attributes to add or update for the paths as key=value pairs.
+
+        Examples
+        --------
+        Update attributes.
+
+        >>> P = nc.Paths(type = 'road travelers')
+        >>> P.update(type = 'rail travelers', location = 'Swizerland')
+
+        """
+        self.attributes.update(attr)
 
     def add_path(self,p):
         """Add a single path to the path list.

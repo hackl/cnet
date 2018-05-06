@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : __init__.py
 # Creation  : 09 Feb 2018
-# Time-stamp: <Fre 2018-05-04 09:25 juergen>
+# Time-stamp: <Son 2018-05-06 08:55 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -30,8 +30,11 @@ __version__ = '0.0.2'
 __author__ = 'Juergen Hackl'
 __copyright__ = 'Copyright 2018 Juergen Hackl'
 
-from cnet.utils.config import config
-from cnet.utils.logger import logger
+from .utils.config import config
+from .utils.logger import logger
+
+from .classes import *
+
 
 # =============================================================================
 # eof

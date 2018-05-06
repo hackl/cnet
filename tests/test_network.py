@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_network.py 
 # Creation  : 29 Mar 2018
-# Time-stamp: <Sam 2018-05-05 12:54 juergen>
+# Time-stamp: <Son 2018-05-06 08:56 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -31,7 +31,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import cnet
-from cnet.classes.network import Node, Edge, Network
+from cnet import Node, Edge, Network
 
 def test_node():
     """Test the node class."""
@@ -232,7 +232,7 @@ def test_add_edge():
 
     with pytest.raises(Exception):
         net.add_edge('de')
-    
+
 def test_add_edges_from():
     net = Network()
     ab = Edge('ab','a','b')
