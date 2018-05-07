@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : spatialnetwork.py 
 # Creation  : 01 May 2018
-# Time-stamp: <Son 2018-05-06 12:20 juergen>
+# Time-stamp: <Mon 2018-05-07 14:06 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -26,6 +26,7 @@
 # =============================================================================
 
 from cnet.classes.network import Node, Edge, Network
+from cnet.classes.paths import Path
 
 from cnet import logger
 from cnet.utils.helpers import haversine
@@ -520,6 +521,98 @@ class SpatialNode(Node):
         """Change the tuple (x,y) of the node coordinate."""
         self.attributes['coordinate'] = coordinate
 
+class SpatialPath(Path,SpatialNetwork):
+    """Base class for spatial embedded paths.
+
+    A Path stores consecutive nodes and edges with optional data, or attributes.
+
+    Instances of this class capture a path that can be directed, un-directed,
+    un-weighted or weighted. The path class is a subclass of a
+    :py:class:`SpatialNetwork`.
+
+    Nodes are defined as :py:class:`SpatialNode` and edges are defined as
+    :py:class:`SpatialEdge`
+
+    Parameters
+    ----------
+    nodes : list of node ids or Nodes
+        The parameter nodes must be a list with node ids or node
+        objects. Every node within the list should have a unique id.
+        The id is converted to a string value and is used as a key value for
+        all dict which saving node objects.
+
+    directed : Boole, optional  (default = True)
+        Specifies if a network contains directed edges, i.e u->v or
+        undirected edges i.d. u<->v. Per default the path is assumed to
+        be directed.
+
+    name : string, optional (default = '')
+        An optional name for the path. If no name is assigned the network is
+        called after the assigned nodes. e.g. if the path has nodes 'a', 'b' and
+        'c', the network is named 'a-b-c'.
+
+    separator : string, optional (default = '-')
+        The separator used to separate the nodes in the node name.
+
+    attr : keyword arguments, optional (default= no attributes)
+        Attributes to add to the path as key=value pairs.
+
+    Attributes
+    ----------
+    name : string
+        Name of the path. If no name is assigned the network is called after the
+        assigned nodes. e.g. if the path has nodes 'a', 'b' and 'c', the network
+        is named 'a-b-c'. The maximum length of the name is defined by the
+        constant `MAX_NAME_LENGTH`, which is per default 5. E.g. if the path has
+        7 nodes (a,b,c,d,e,f,g) the name of the path is 'a-b-c-d-...-g'. Please,
+        note the name of a path is NOT an unique identifier!
+
+    Examples
+    --------
+    >>> p = cn.SpatialPath()
+    >>> p.add_node(cn.SpatialNode('a', x=0, y=1))
+    >>> p.add_node(cn.SpatialNode('b', x=2, y=3))
+
+    See Also
+    --------
+    Path
+
+    """
+    def __init__(self,nodes=None, directed=True, separator='-', **attr):
+        """Initialize a spatial path with direction, name and attributes.
+
+        Parameters
+        ----------
+        nodes : list of node ids or Nodes
+            The parameter nodes must be a list with node ids or node
+            objects. Every node within the list should have a unique id.
+            The id is converted to a string value and is used as a key value for
+            all dict which saving node objects.
+
+        directed : Boole, optional  (default = True)
+            Specifies if a network contains directed edges, i.e u->v or
+            undirected edges i.d. u<->v. Per default the path is assumed to
+            be directed.
+
+        name : string, optional (default = '')
+            An optional name for the path. If no name is assigned the network is
+            called after the assigned nodes. e.g. if the path has nodes 'a', 'b'
+            and 'c', the network is named 'a-b-c'.
+
+        separator : string, optional (default = '-')
+            The separator used to separate the nodes in the node name.
+
+        attr : keyword arguments, optional (default= no attributes)
+            Attributes to add to the path as key=value pairs.
+
+        """
+        # initialize the parent class of the path
+        Path.__init__(self, nodes=None, directed=True, separator='-', **attr)
+        # initialize the parent class of the network
+        SpatialNetwork.__init__(self, directed=directed, **attr)
+        # assign nodes to the path
+        if isinstance(nodes,list):
+            super().add_nodes_from(nodes)
 
 
 # =============================================================================

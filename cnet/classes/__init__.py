@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : __init__.py 
 # Creation  : 04 May 2018
-# Time-stamp: <Son 2018-05-06 09:01 juergen>
+# Time-stamp: <Mon 2018-05-07 13:39 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -27,7 +27,7 @@
 
 from .network import Node, Edge, Network
 from .paths import Path, Paths
-from .spatial_network import SpatialNode, SpatialEdge, SpatialNetwork
+from .spatial_network import SpatialNode, SpatialEdge, SpatialNetwork, SpatialPath
 
 
 

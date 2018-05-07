@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_network.py 
 # Creation  : 29 Mar 2018
-# Time-stamp: <Son 2018-05-06 11:22 juergen>
+# Time-stamp: <Mon 2018-05-07 14:04 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -31,7 +31,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import cnet
-from cnet import SpatialNode, SpatialEdge, SpatialNetwork
+from cnet import SpatialNode, SpatialEdge, SpatialNetwork, SpatialPath
 
 def test_spatial_node():
     """Test the spatial node class."""
@@ -158,6 +158,19 @@ def test_spatial_network():
 
     net.add_edge('cd','c','d')
     assert net.nodes['d'].coordinate == (0,0)
+
+def test_spatial_path():
+    p = SpatialPath(['a'])
+
+    assert p.nodes['a'].coordinate == (0,0)
+
+    b = SpatialNode('b',x=1, y=2)
+    p.add_node(b)
+
+    assert p.nodes['b'].coordinate == (1,2)
+    assert p.path.edges[0] == 'a-b'
+    assert len(p) == 2
+    assert p.number_of_edges() == 1
 
 
 # =============================================================================

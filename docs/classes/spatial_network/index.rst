@@ -15,5 +15,5 @@ Contents:
    node
    edge
    network
-
+   path
 

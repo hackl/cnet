@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : paths.py 
 # Creation  : 29 Mar 2018
-# Time-stamp: <Son 2018-05-06 12:08 juergen>
+# Time-stamp: <Mon 2018-05-07 14:00 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -79,6 +79,44 @@ class Path(Network):
 
     Examples
     --------
+    Create an empty path with no nodes and no edges.
+
+    >>> p = cn.Path()
+
+    Some properties of the path are: the name, if directed or the shape
+
+    >>> p.name = 'my test path'
+    >>> p.name
+    my test path
+
+    Adding a singe new node to the network.
+
+    >>> p.add_node('a',color='red')
+
+    Adding an existing node object to the network.
+
+    >>> b = cn.Node('b',color='green')
+    >>> p.add_node(b)
+
+    An edge was generated between a and b
+
+    >>> p.name
+    a-b
+
+    Adding a singe new edge to the path.
+
+    >>> p.add_edge('cd','c','d', length = 10)
+
+    Adding an existing edge object to the path.
+
+    >>> e = cn.Edge('da','d','a', length = 5)
+    >>> p.add_edge(e)
+    >>> p.name
+    a-b-c-d-a
+
+    See Also
+    --------
+    SpatialPath
 
     """
     def __init__(self,nodes=None, directed=True, separator='-', **attr):
@@ -282,10 +320,12 @@ class Path(Network):
         >>> p.add_node('a',color='red')
 
         Adding an existing node object to the network.
+
         >>> b = cn.Node('b',color='green')
         >>> p.add_node(b)
 
         An edge was generated between a and b
+
         >>> p.name
         a-b
 
