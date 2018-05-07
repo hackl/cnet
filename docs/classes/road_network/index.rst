@@ -3,27 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-***************
-Classes of CNet
-***************
-
-Basic classes
-=============
+**********************
+The road network class
+**********************
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
-   network/index
-   paths/index
-   spatial_network/index
-   road_network/index
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   node
+   edge
+   network
 

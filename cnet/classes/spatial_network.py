@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : spatialnetwork.py 
 # Creation  : 01 May 2018
-# Time-stamp: <Mon 2018-05-07 14:06 juergen>
+# Time-stamp: <Mon 2018-05-07 15:42 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -60,7 +60,7 @@ class SpatialNetwork(Network):
 
     See Also
     --------
-    Network
+    Network, RoadNetwork
 
     """
     def __init__(self, directed=True, **attr):
@@ -156,7 +156,7 @@ class SpatialEdge(Edge):
 
     Examples
     --------
-    Create an empty edge with out coordinate (not recommended but possible).
+    Create an empty edge with out coordinates (not recommended but possible).
 
     >>> ab = cn.SpatialEdge('ab','a','b')
     [WARNING] No suitable coordinate was found for node "a"! Coordinate was set to "(0,0)"!
@@ -191,11 +191,11 @@ class SpatialEdge(Edge):
 
     See Also
     --------
-    Edge
+    Edge, RoadEdge
 
     """
     def __init__(self,id,u,v,**attr):
-        """Initialize the spatial node object.
+        """Initialize the spatial edge object.
 
         Parameters
         ----------
@@ -430,7 +430,7 @@ class SpatialNode(Node):
 
     See Also
     --------
-    Node
+    Node, RoadNode
 
     """
     def __init__(self,u,**attr):
