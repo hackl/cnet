@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py 
 # Creation  : 11 Apr 2018
-# Time-stamp: <Son 2018-05-06 11:57 juergen>
+# Time-stamp: <Mit 2018-05-09 16:05 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -1132,8 +1132,269 @@ class OrderedEdgeDict(OrderedDict):
             else:
                 yield key,value
 
+class NodeDict(OrderedDict):
+    """A container to save the nodes.
+
+    This class is based on an OrderedDict with some additional modifications to
+    store, call and modify nodes in different kinds.
+
+    Examples
+    --------
+
+    Creating some nodes with attributes
+
+    >>> u = cn.Node('u',color='red')
+    >>> v = cn.Node('v',color='red',shape='circle')
+    >>> w = cn.Node('w',color='blue',type='node')
+
+    Creating empty NodeDict and adding the nodes with id as key and
+    :py:class:`Node` as value.
+
+    >>> nodes = cn.NodeDict()
+
+    >>> nodes[u.id] = u
+    >>> nodes[v.id] = v
+    >>> nodes[w.id] = w
+
+    The :py:class:`NodeDict` behaves like a 'normal' dict, e.g. for accessing
+    items, iterating adding or deleting.
+
+    >>> nodes['u']
+    Node u
+
+    Iterating through the dictionary, returning the keys.
+
+    >>> for n in nodes:
+    >>>    print(n)
+    u
+    v
+    w
+
+    >>> for n,N in nodes.items():
+    >>>     print(n,N)
+    u, Node u
+    v, Node v
+    w, Node w
+
+    However new features are:
+
+    Entering a number as key is interpreted as an index.
+
+    >>> nodes[1]
+    Node v
+
+    Node attributes can be entered, modified and accessed via:
+
+    >>> nodes['u']['color']
+    'red'
+
+    >>> nodes['u']['color'] = 'green'
+    >>> nodes['u']['color']
+    'green'
+
+    If no node is defined, only the attribute, a dictionary with the node id as
+    key and the corresponding attribute as value is returned.
+
+    >>> nodes['color']
+    {u:'green', w:'blue', v:'red'}
+
+    If a node does not have such an attribute, the value None will be returned.
+
+    >>> nodes['shape']
+    {u:None, w:None, v:'circle'}
+
+    New attributes for all nodes can be added like for a normal dict. Thereby
+    the order of the attributes correspond to the order of the nodes in the
+    OrderedDict.
+
+    >>> nodes['age'] = [21,32,33]
+
+    If a sequence of attributes is shorter than the number of nodes in the
+    Network, the same sequence is reused.
+
+    >>> nodes['gender'] = ['m','f']
+    >>> nodes['gender']
+    {u:'m', v:'f', w:'m'}
+
+    Also the :py:class:`NodeDict` can be used as an iterator function.
+
+    Iterating through all node objects.
+
+    >>> for n in nodes()
+    >>>     print(n)
+    Node u
+    Node v
+    Node w
+
+    Iterate trough specific attributes
+
+    >>> for n in nodes('age')
+    >>>     print(n)
+    21
+    32
+    33
+
+    >>> for n in nodes('age','gender')
+    >>>     print(n)
+    (21, m)
+    (32, f)
+    (33, m)
+
+    With data enabled also the node id is returned 
+
+    >>> for n in nodes('age', data=True)
+    >>>     print(n)
+    (u, 21)
+    (v, 32)
+    (w, 33)
+
+    Is no argument given but data enabled, the node id and all their associated
+    attributes are returned.
+
+    >>> for n in nodes(data=True)
+    >>>     print(n)
+    ('u', {'gender': 'm', 'age': 21, 'color': 'red'})
+    ('v', {'age': 32, 'gender': 'f', 'shape': 'circle', 'color': 'red'})
+    ('w', {'gender': 'm', 'type': 'node', 'age': 33, 'color': 'blue'})
+
+    """
+    def __call__(self,*args, data=False, **kwds):
+        """Returns an iterator over all nodes.
+
+        Parameters
+        ----------
+        data : bool, optional (default = False)
+            If true the attributes associated with the nodes are in the iterator.
+
+        Returns
+        -------
+        node_iter : iterator
+            An iterator over all nodes in the network, with their associated
+            attributes.
+
+        Examples
+        --------
+        >>> net = cn.Network()
+        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')],length = 5)
+        >>> for n in net.nodes.iter():
+        >>>    print(n)
+        a, Node a
+        b, Node b
+        c, Node c
+
+        With attributes
+
+        >>> for n in net.edges.iter(data=True):
+        >>>    print(n)
+        a, {}
+        b, {}
+        c, {}
+
+        """
+        for key,value in OrderedDict(self).items():
+            if len(args) > 0:
+                _attributes = []
+                keys = [a for a in args if (a in self.attributes())]
+                for i in keys:
+                    if i in value.attributes:
+                        _attributes.append(value[i])
+                    else:
+                        _attributes.append(None)
+
+                if not data and len(_attributes) == 1:
+                    yield _attributes[0]
+                elif not data and len(_attributes) > 1:
+                    yield tuple(_attributes)
+                elif data and len(_attributes) == 1:
+                    yield key, _attributes[0]
+                elif data and len(_attributes) > 1:
+                    yield tuple([key] + _attributes)
+                else:
+                    log.error('Something went wrong!'
+                              'But I am not sure what :(')
+                    raise CnetError
+            elif data and len(args) == 0:
+                yield key, value.attributes
+            else:
+                yield value
+
+    def __getitem__(self,key):
+        # check if key is a node id and return the node object
+        if key in OrderedDict(self):
+            return OrderedDict(self)[key]
+        # if key is a int, return the Node at the index
+        elif isinstance(key,int):
+            return list(OrderedDict(self).values())[key]
+        # check if there is an attribute with the name and return a dict of
+        # attribute values for the nodes
+        elif key in self.attributes():
+            _dict = {}
+            for k,v in OrderedDict(self).items():
+                if key in v.attributes:
+                    _dict[k] = v[key]
+                else:
+                    _dict[k] = None
+            return _dict
+        # else raise an error
+        else:
+            log.error('No node or node attribute with the key "{}" is defined!'
+                      ''.format(key))
+            raise CnetError
+
+    def __setitem__(self,key,value):
+        # check if value is a Node class.
+        # if so, add node to the Ordered dict
+        if isinstance(value,Node):
+            super().__setitem__(key, value)
+        else:
+            if isinstance(value,list):
+                # check if list is shorter then the dict
+                # if so repeat the dict until it is longer then the dict
+                if len(value) < len(self):
+                    value = value * -(-len(self)//len(value))
+                for i,(k,v) in enumerate(OrderedDict(self).items()):
+                    v[key] = value[i]
+            else:
+                for k,v in OrderedDict(self).items():
+                    v[key] = value
+
+    def attributes(self):
+        """Returns the list of all the nodes attributes in the network."""
+        _attributes = set()
+        for v in OrderedDict(self).values():
+            _attributes.update(list(v.attributes.keys()))
+        return list(_attributes)
+
+    def index(self,idx):
+        """Returns the list index of a node.
+
+        Parameters
+        ----------
+        index : node id
+            The index is the identifier (id) for the node. Every node
+            should have a unique id. The id has to be a string value.
+
+        Returns
+        -------
+        index : integer
+            the index in the list, where the node object is stored.
+
+        Examples
+        --------
+        >>> net = cn.Network()
+        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')])
+        >>> net.nodes.index('b')
+        1
+
+        """
+        return list(OrderedDict(self).keys()).index(idx)
+
+
 class OrderedNodeDict(OrderedDict):
     """An extended class of OrderedDict to save the nodes."""
+    def __call__(self):
+        print('is this working?')
+
     def index(self,idx):
         """Returns the list index of a node.
 
@@ -1629,7 +1890,7 @@ class Node(object):
         except Exception as error:# as error:
             log.error('No attribute with key "{}" is defined for node'
                       ' "{}".'.format(key,self.id))
-            raise
+            raise CnetError
 
     def __setitem__(self, key, item):
         """Add a specific attribute to the node."""

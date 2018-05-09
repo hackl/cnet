@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_network.py 
 # Creation  : 29 Mar 2018
-# Time-stamp: <Son 2018-05-06 08:56 juergen>
+# Time-stamp: <Mit 2018-05-09 16:04 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -32,6 +32,8 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import cnet
 from cnet import Node, Edge, Network
+from cnet.classes.network import NodeDict
+from cnet import SpatialNode
 
 def test_node():
     """Test the node class."""
@@ -314,6 +316,82 @@ def transition_matrix(net):
 def laplacian_matrix(net):
     pass
 
+def test_node_dict():
+    u = Node('u',color='red')
+    v = Node('v',color='red',shape='circle')
+    w = Node('w',color='blue',type='node')
+    nodes = NodeDict()
+    nodes[u.id] = u
+    nodes[v.id] = v
+    nodes[w.id] = w
+
+    assert len(nodes)
+    assert isinstance(nodes['u'],Node)
+    assert nodes['w'].id == 'w'
+    assert nodes['u']['color'] == 'red'
+
+    assert nodes[0].id == 'u'
+    assert nodes[1].id == 'v'
+
+    assert nodes.index('u') == 0
+    assert nodes.index('v') == 1
+
+    assert 'color' in nodes.attributes()
+
+    with pytest.raises(Exception):
+        nodes['u']['age']
+
+    nodes['age'] = [21,32,33]
+
+    assert nodes['u']['age'] == 21
+
+    nodes['u']['age'] = 10
+
+    assert nodes['u']['age'] == 10
+
+    nodes['gender'] = ['m','f']
+
+    assert isinstance(nodes['gender'],dict)
+    assert nodes['gender']['w'] == 'm'
+
+    with pytest.raises(Exception):
+        nodes['not in nodes']
+
+    assert nodes == nodes
+
+    for n in nodes:
+        assert isinstance(n,str)
+
+    for n in nodes():
+        assert isinstance(n,Node)
+
+    for a in nodes('age'):
+        assert isinstance(a,int)
+
+    for n,a in nodes('age',data=True):
+        assert isinstance(n,str)
+        assert isinstance(a,int)
+
+    for n,a in nodes(data=True):
+        assert isinstance(n,str)
+        assert isinstance(a,dict)
+
+
+    for a in nodes('age','gender'):
+        assert isinstance(a,tuple)
+        assert isinstance(a[0],int)
+        assert isinstance(a[1],str)
+
+    for n,a,g in nodes('age','gender',data=True):
+        assert isinstance(n,str)
+        assert isinstance(a,int)
+        assert isinstance(g,str)
+
+    for n in nodes(data=True):
+        print(n)
+
+
+        
 # =============================================================================
 # eof
 #
