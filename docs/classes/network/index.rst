@@ -15,5 +15,6 @@ Contents:
    node
    edge
    network
-
+   nodedict
+   edgedict
 

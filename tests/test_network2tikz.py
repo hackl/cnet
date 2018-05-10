@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_network2tikz.py 
 # Creation  : 08 May 2018
-# Time-stamp: <Mit 2018-05-09 08:38 juergen>
+# Time-stamp: <Don 2018-05-10 09:50 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -105,10 +105,10 @@ def test_plot(net):
     # print the summary of the graph (only for debugging)
     plot(net)
 
-    for e in net.edges.iter(data=True):
+    for e in net.edges(data=True):
         print(e)
 
-    for n in net.nodes.iter(data=True):
+    for n in net.nodes(data=True):
         print(n)
 
     print(net.nodes['b']['age'])

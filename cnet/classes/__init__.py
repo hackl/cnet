@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : __init__.py 
 # Creation  : 04 May 2018
-# Time-stamp: <Mon 2018-05-07 14:30 juergen>
+# Time-stamp: <Don 2018-05-10 08:21 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -25,7 +25,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 # =============================================================================
 
-from .network import Node, Edge, Network
+from .network import Node, Edge, Network, NodeDict, EdgeDict
 from .paths import Path, Paths
 from .spatial_network import SpatialNode, SpatialEdge, SpatialNetwork, SpatialPath
 from .road_network import RoadNode, RoadEdge, RoadNetwork

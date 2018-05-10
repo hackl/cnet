@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py 
 # Creation  : 11 Apr 2018
-# Time-stamp: <Mit 2018-05-09 16:05 juergen>
+# Time-stamp: <Don 2018-05-10 09:49 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -150,10 +150,10 @@ class Network(object):
         self.attributes.update(attr)
 
         # an ordered dictionary containing node objects
-        self.nodes = OrderedNodeDict()
+        self.nodes = NodeDict()
 
         # an ordered dictionary containing edge objects
-        self.edges = OrderedEdgeDict()
+        self.edges = EdgeDict()
 
         # Classes of the Node and Edge objects
         # TODO: Probably there is a better solution to have different Node and
@@ -762,7 +762,7 @@ class Network(object):
         data = []
 
         if transposed:
-            for e, s, t in self.edges.iter(nodes=True):
+            for e, (s, t) in self.edges(nodes=True):
                 row.append(self.nodes.index(t))
                 col.append(self.nodes.index(s))
                 if not self.directed:
@@ -770,7 +770,7 @@ class Network(object):
                     col.append(self.nodes.index(t))
 
         else:
-            for e, s, t in self.edges.iter(nodes=True):
+            for e, (s, t) in self.edges(nodes=True):
                 row.append(self.nodes.index(s))
                 col.append(self.nodes.index(t))
                 if not self.directed:
@@ -1054,9 +1054,413 @@ class Network(object):
     def has_path(self,path):
         pass
 
+class EdgeDict(OrderedDict):
+    """A container to save the edges.
 
-class OrderedEdgeDict(OrderedDict):
-    """An extended class of OrderedDict to save the edges."""
+    This class is based on an OrderedDict with some additional modifications to
+    store, call and modify edges in different kinds.
+
+    Examples
+    --------
+
+    Creating some edges with attributes
+
+    >>> ab = cn.Edge('ab','a','b',length=10, type='road')
+    >>> bc = cn.Edge('bc','b','c',length=15)
+
+    Creating empty EdgeDict and adding the nodes with id as key and
+    :py:class:`Edge` as value.
+
+    >>> edges = cn.EdgeDict()
+
+    >>> edges[ab.id] = ab
+    >>> edges[bc.id] = bc
+
+    The :py:class:`EdgeDict` behaves like a 'normal' dict, e.g. for accessing
+    items, iterating adding or deleting.
+
+    >>> edges['ab']
+    Edge ab
+
+    Iterating through the dictionary, returning the keys.
+
+    >>> for e in edges:
+    >>>    print(e)
+    ab
+    bc
+
+    >>> for e,E in edges.items():
+    >>>     print(e,E)
+    ab, Edge ab
+    bc, Edge bc
+
+    However new features are:
+
+    Entering a number as key is interpreted as an index.
+
+    >>> edges[1]
+    Edge bc
+
+    Entering a tuple of node ids returns also the associated edge(s). If there
+    is only one edge this will be returned, otherwise a list of edges will be
+    returned.
+
+    >>> edges[('a','b')]
+    Edge ab
+
+    >>> edges['ab2'] = cn.Edge('ab2','a','b')
+    >>> edges[('a','b')]
+    [Edge ab, Edge ab2]
+
+    An single edge can be deleted with
+
+    >>> del edges['ab2']
+
+    Edge attributes can be entered, modified and accessed via:
+
+    >>> edge['ab']['length']
+    10
+
+    >>> edges['ab']['length'] = 5
+    >>> edges['ab']['length']
+    5
+
+    If no edge is defined, only the attribute, a dictionary with the edge id as
+    key and the corresponding attribute as value is returned.
+
+    >>> edges['length']
+    {'bc': 15, 'ab': 5}
+
+    If an edge does not have such an attribute, the value None will be returned.
+
+    >>> edges['type']
+    {'bc': None, 'ab': 'road'}
+
+    New attributes for all edges can be added like for a normal dict. Thereby
+    the order of the attributes correspond to the order of the edges in the
+    OrderedDict.
+
+    >>> edges['capacity'] = [100,200]
+
+    If a sequence of attributes is shorter than the number of edges in the
+    Network, the same sequence is reused.
+
+    >>> edges['speed'] = 30
+    >>> edges['speed']
+    {ab:30, bc:30}
+
+    Also the :py:class:`EdgeDict` can be used as an iterator function.
+
+    Iterating through all edge objects.
+
+    >>> for e in edges()
+    >>>     print(e)
+    Edge ab
+    Edge bc
+
+    Iterate trough specific attributes
+
+    >>> for e in edges('lenght')
+    >>>     print(e)
+    5
+    15
+
+    >>> for e in edges('length','type')
+    >>>     print(e)
+    (5, 'road')
+    (15, None)
+
+    With data enabled also the edge id is returned 
+
+    >>> for e,a in edges('length', data=True)
+    >>>     print(e,a)
+    (ab, 5)
+    (bc, 15)
+
+    Is no argument given but data enabled, the edge id and all their associated
+    attributes are returned.
+
+    >>> for e,a in edges(data=True)
+    >>>     print(e,a)
+    ab {'length': 5, 'speed': 30, 'type': 'road', 'capacity': 100}
+    bc {'length': 15, 'speed': 30, 'capacity': 200}
+
+    Additionally to the attributes the associated node ids of the edge can be
+    returned by enabling the option nodes.
+
+    >>> for e,n in edges(nodes=True):
+    >>>     print(e,n)
+    ab ('a', 'b')
+    bc ('b', 'c')
+
+    >>> for e,n,a in edges(nodes=True, data=True):
+    >>>     print(e,n,a)
+    ab ('a', 'b') {'speed': 30, 'capacity': 100, 'length': 5, 'type': 'road'}
+    bc ('b', 'c') {'capacity': 200, 'length': 15, 'speed': 30}
+
+    """
+    def __call__(self,*args, nodes=False, data=False, **kwds):
+        """Returns an iterator over all nodes.
+
+        Parameters
+        ----------
+        args : arguments
+            The arguments are the key words for the node attributes. If an
+            argument is given, the node attributed associate with this (these)
+            arguments are returned.
+
+        nodes : bool, optional (default = False)
+            If true also the node ids of the edges are added to the iterator.
+
+        data : bool, optional (default = False)
+            If true the attributes associated with the nodes are in the iterator.
+
+        Returns
+        -------
+        node_iter : iterator
+            An iterator over all nodes in the network, with their associated
+            attributes and node ids.
+
+        Examples
+        --------
+        >>> edges = cn.EdgeDict()
+        >>> edges['ab'] = cn.Edge('ab','a','b',length=10, type='road')
+        >>> edges['bc'] = cn.Edge('bc','b','c',length=15)
+
+        Iterate trough specific attributes
+
+        >>> for e in edges('lenght')
+        >>>     print(e)
+        5
+        15
+
+        >>> for e in edges('length','type')
+        >>>     print(e)
+        (5, 'road')
+        (15, None)
+
+        With data enabled also the edge id is returned 
+
+        >>> for e,a in edges('length', data=True)
+        >>>     print(e,a)
+        (ab, 5)
+        (bc, 15)
+
+        Is no argument given but data enabled, the edge id and all their
+        associated attributes are returned.
+
+        >>> for e,a in edges(data=True)
+        >>>     print(e,a)
+        ab {'length': 5, 'speed': 30, 'type': 'road', 'capacity': 100}
+        bc {'length': 15, 'speed': 30, 'capacity': 200}
+
+        Additionally to the attributes the associated node ids of the edge can
+        be returned by enabling the option nodes.
+
+        >>> for e,n in edges(nodes=True):
+        >>>     print(e,n)
+        ab ('a', 'b')
+        bc ('b', 'c')
+
+        >>> for e,n,a in edges(nodes=True, data=True):
+        >>>     print(e,n,a)
+        ab ('a', 'b') {'speed': 30, 'capacity': 100, 'length': 5, 'type': 'road'}
+        bc ('b', 'c') {'capacity': 200, 'length': 15, 'speed': 30}
+
+        """
+        for key,value in OrderedDict(self).items():
+            _yield = []
+            # check if data enabled
+            if data or nodes:
+                _yield.append(key)
+            # check if nodes are enabled
+            if nodes:
+                _yield.append((value.u.id,value.v.id))
+            # check if arguments are defined
+            if len(args) > 0:
+                _attributes = []
+                keys = [a for a in args if (a in self.attributes())]
+                for i in keys:
+                    if i in value.attributes:
+                        _attributes.append(value[i])
+                    else:
+                        _attributes.append(None)
+
+                if len(_attributes) == 1:
+                    _yield.append(_attributes[0])
+                elif len(_attributes) > 1:
+                    _yield.append(tuple(_attributes))
+                else:
+                    log.error('The defined attribute(s) are not defined!')
+                    raise CnetError
+
+            elif data and len(args) == 0:
+                _yield.append(value.attributes)
+            elif nodes:
+                pass
+            else:
+                _yield.append(value)
+            if len(_yield) == 1:
+                yield _yield[0]
+            else:
+                yield tuple(_yield)
+
+    def __getitem__(self,key):
+        """Returns an item dependent on the key value.
+
+        If the key is associated with an edge id, the :py:class:`Edge` will be
+        returned.
+
+        If the key is associated with an attribute of any edge, a dictionary
+        with edge ids as key and the requested attribute as value will be
+        returned. If an edge does not contain such an attribute a None value will
+        be returned instead.
+
+        If a integer value is entered as key, the :py:class:`Edge` stored at
+        this index will be returned.
+
+        And if a tuple of node ids is entered as key, the corresponding edge is
+        returned.
+
+        Examples
+        --------
+        >>> edges = cn.EdgeDict()
+        >>> edges['ab'] = cn.Edge('ab','a','b',length=10, type='road')
+        >>> edges['bc'] = cn.Edge('bc','b','c',length=15)
+
+        The normal use of the dictionary.
+
+        >>> edges['ab']
+        Edge ab
+
+        Entering a number as key is interpreted as an index.
+
+        >>> edges[1]
+        Edge bc
+
+        If no edge is defined, only the attribute, a dictionary with the edge id
+        as key and the corresponding attribute as value is returned.
+
+        >>> edges['length']
+        {'bc': 15, 'ab': 10}
+
+        If an edge does not have such an attribute, the value None will be returned.
+
+        >>> edges['type']
+        {'bc': None, 'ab': 'road'}
+
+        Entering a tuple of node ids returns also the associated edge(s). If
+        there is only one edge this will be returned, otherwise a list of edges
+        will be returned.
+
+        >>> edges[('a','b')]
+        Edge ab
+
+        >>> edges['ab2'] = cn.Edge('ab2','a','b')
+        >>> edges[('a','b')]
+        [Edge ab, Edge ab2]
+
+        """
+        # check if key is an edge id and return the Edge object
+        if key in OrderedDict(self):
+            return OrderedDict(self)[key]
+        # if key is a tuple, check if there are edges with these node ids
+        elif isinstance(key,tuple):
+            _edges = []
+            for e in OrderedDict(self).values():
+                if key == (e.u.id,e.v.id):
+                    _edges.append(e)
+
+            if len(_edges) == 1:
+                return _edges[0]
+            elif len(_edges) > 1:
+                return _edges
+            else:
+                log.error('There is no edge with nodes {}!'.format(key))
+                raise CnetError
+        # if key is a int, return the Edge at the index
+        elif isinstance(key,int):
+            return list(OrderedDict(self).values())[key]
+        # check if there is an attribute with the name and return a dict of
+        # attribute values for the edges
+        elif key in self.attributes():
+            _dict = {}
+            for k,v in OrderedDict(self).items():
+                if key in v.attributes:
+                    _dict[k] = v[key]
+                else:
+                    _dict[k] = None
+            return _dict
+        # else raise an error
+        else:
+            log.error('No edge or edge attribute with the key "{}" is defined!'
+                      ''.format(key))
+            raise CnetError
+
+    def __setitem__(self,key,value):
+        """Set and modify items of the EdgeDict values.
+
+        If the value is an instance of a :py:class:`Edge` class the edge is
+        added to the dictionary with the edge id as key value.
+
+        If the key is not an edge id, a new attribute will be added to all edges
+        in the dictionary.
+
+        Examples
+        --------
+        Adding edges to the dictionary
+
+        >>> edges = cn.EdgeDict()
+        >>> edges['ab'] = cn.Edge('ab','a','b',length=10, type='road')
+        >>> edges['bc'] = cn.Edge('bc','b','c',length=15)
+
+        New attributes for all edges can be added like for a normal
+        dict. Thereby the order of the attributes correspond to the order of the
+        edges in the OrderedDict.
+
+        >>> edges['capacity'] = [100,200]
+
+        If a sequence of attributes is shorter than the number of edges in the
+        Network, the same sequence is reused.
+
+        >>> edges['speed'] = 30
+        >>> edges['speed']
+        {ab:30, bc:30}
+
+        """
+        # check if value is a Node class.
+        # if so, add node to the Ordered dict
+        if isinstance(value,Edge):
+            super().__setitem__(key, value)
+        else:
+            if isinstance(value,list):
+                # check if list is shorter then the dict
+                # if so repeat the dict until it is longer then the dict
+                if len(value) < len(self):
+                    value = value * -(-len(self)//len(value))
+                for i,(k,v) in enumerate(OrderedDict(self).items()):
+                    v[key] = value[i]
+            else:
+                for k,v in OrderedDict(self).items():
+                    v[key] = value
+
+    @property
+    def last(self):
+        """Returns the last edge added to the network"""
+        return next(reversed(OrderedDict(self)))
+
+    @property
+    def first(self):
+        """Returns the first edge added to the network"""
+        return next(iter(OrderedDict(self)))
+
+    def attributes(self):
+        """Returns the list of all the edge attributes in the network."""
+        _attributes = set()
+        for v in OrderedDict(self).values():
+            _attributes.update(list(v.attributes.keys()))
+        return list(_attributes)
+
     def index(self,idx):
         """Returns the list index of an edge.
 
@@ -1080,57 +1484,6 @@ class OrderedEdgeDict(OrderedDict):
 
         """
         return list(OrderedDict(self).keys()).index(idx)
-
-    def iter(self, nodes=False, data=False):
-        """Returns an iterator over all edges.
-
-        Parameters
-        ----------
-        nodes : bool, optional (default = False)
-            If true the edge id and the associate node ids are in the iterator.
-
-        data : bool, optional (default = False)
-            If true the attributes associated with the edge are in the iterator.
-
-        Returns
-        -------
-        edge_iter : iterator
-            An iterator over all edges in the network with their associated
-            nodes and/or attributes.
-
-        Examples
-        --------
-        >>> net = cn.Network()
-        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')],length = 5)
-        >>> for e in net.edges.iter():
-        >>>    print(e)
-        ab, Edge ab
-        ab, Edge bc
-
-        With nodes.
-
-        >>> for e in net.edges.iter(nodes=True):
-        >>>    print(e)
-        ab, a, b
-        bc, b, c
-
-        with nodes and attributes
-
-        >>> for e in net.edges.iter(nodes=True, data=True):
-        >>>    print(e)
-        ab, a, b, {length = 5}
-        bc, b, c, {length = 5}
-
-        """
-        for key,value in OrderedDict(self).items():
-            if nodes and data:
-                yield (key, value.u.id, value.v.id, value.attributes)
-            elif nodes and not data:
-                yield (key, value.u.id, value.v.id)
-            elif not nodes and data:
-                yield (key, value.attributes)
-            else:
-                yield key,value
 
 class NodeDict(OrderedDict):
     """A container to save the nodes.
@@ -1263,6 +1616,11 @@ class NodeDict(OrderedDict):
 
         Parameters
         ----------
+        args : arguments
+            The arguments are the key words for the node attributes. If an
+            argument is given, the node attributed associate with this (these)
+            arguments are returned.
+
         data : bool, optional (default = False)
             If true the attributes associated with the nodes are in the iterator.
 
@@ -1274,21 +1632,51 @@ class NodeDict(OrderedDict):
 
         Examples
         --------
-        >>> net = cn.Network()
-        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')],length = 5)
-        >>> for n in net.nodes.iter():
-        >>>    print(n)
-        a, Node a
-        b, Node b
-        c, Node c
+        Creating some nodes with attributes
 
-        With attributes
+        >>> nodes = cn.NodeDict()
+        >>> nodes['u'] = cn.Node('u', age=21, gender='m')
+        >>> nodes['v'] = cn.Node('v', age=32, gender='f')
+        >>> nodes['w'] = cn.Node('w', age=33, gender='m')
 
-        >>> for n in net.edges.iter(data=True):
-        >>>    print(n)
-        a, {}
-        b, {}
-        c, {}
+        Iterating through all node objects.
+    
+        >>> for n in nodes()
+        >>>     print(n)
+        Node u
+        Node v
+        Node w
+    
+        Iterate trough specific attributes
+    
+        >>> for n in nodes('age')
+        >>>     print(n)
+        21
+        32
+        33
+    
+        >>> for n in nodes('age','gender')
+        >>>     print(n)
+        (21, m)
+        (32, f)
+        (33, m)
+    
+        With data enabled also the node id is returned 
+    
+        >>> for n in nodes('age', data=True)
+        >>>     print(n)
+        (u, 21)
+        (v, 32)
+        (w, 33)
+    
+        Is no argument given but data enabled, the node id and all their
+        associated attributes are returned.
+    
+        >>> for n in nodes(data=True)
+        >>>     print(n)
+        ('u', {'gender': 'm', 'age': 21})
+        ('v', {'age': 32, 'gender': 'f'})
+        ('w', {'gender': 'm', 'age': 33})
 
         """
         for key,value in OrderedDict(self).items():
@@ -1310,8 +1698,7 @@ class NodeDict(OrderedDict):
                 elif data and len(_attributes) > 1:
                     yield tuple([key] + _attributes)
                 else:
-                    log.error('Something went wrong!'
-                              'But I am not sure what :(')
+                    log.error('The defined attribute(s) are not defined!')
                     raise CnetError
             elif data and len(args) == 0:
                 yield key, value.attributes
@@ -1319,6 +1706,48 @@ class NodeDict(OrderedDict):
                 yield value
 
     def __getitem__(self,key):
+        """Returns an item dependent on the key value.
+
+        If the key is associated with a node id, the :py:class:`Node` will be
+        returned.
+
+        If the key is associated with an attribute of any node, a dictionary
+        with node ids as key and the requested attribute as value will be
+        returned. If a node does not contain such an attribute a None value will
+        be returned instead.
+
+        If a integer value is entered as key, the :py:class:`Node` stored at
+        this index will be returned.
+
+        Examples
+        --------
+        >>> nodes = cn.NodeDict()
+        >>> nodes['u'] = cn.Node('u',color='green')
+        >>> nodes['v'] = cn.Node('v',color='red',shape='circle')
+        >>> nodes['w'] = cn.Node('w',color='blue',type='node')
+
+        The normal use of the dictionary.
+
+        >>> nodes['u']
+        Node u
+
+        Entering a number as key is interpreted as an index.
+
+        >>> nodes[1]
+        Node v
+
+        If no node is defined, only the attribute, a dictionary with the node id
+        as key and the corresponding attribute as value is returned.
+
+        >>> nodes['color']
+        {u:'green', w:'blue', v:'red'}
+
+        If a node does not have such an attribute, the value None will be returned.
+
+        >>> nodes['shape']
+        {u:None, w:None, v:'circle'}
+
+        """
         # check if key is a node id and return the node object
         if key in OrderedDict(self):
             return OrderedDict(self)[key]
@@ -1342,6 +1771,37 @@ class NodeDict(OrderedDict):
             raise CnetError
 
     def __setitem__(self,key,value):
+        """Set and modify items of the NodeDict values.
+
+        If the value is an instance of a :py:class:`Node` class the node is
+        added to the dictionary with the node id as key value.
+
+        If the key is not a node id, a new attribute will be added to all nodes
+        in the dictionary.
+
+        Examples
+        --------
+        Adding nodes to the dictionary.
+
+        >>> nodes = cn.NodeDict()
+        >>> nodes['u'] = cn.Node('u',color='green')
+        >>> nodes['v'] = cn.Node('v')
+        >>> nodes['w'] = cn.Node('w',color='blue')
+
+        New attributes for all nodes can be added like for a normal
+        dict. Thereby the order of the attributes correspond to the order of the
+        nodes in the OrderedDict.
+
+        >>> nodes['age'] = [21,32,33]
+
+        If a sequence of attributes is shorter than the number of nodes in the
+        Network, the same sequence is reused.
+
+        >>> nodes['gender'] = ['m','f']
+        >>> nodes['gender']
+        {u:'m', v:'f', w:'m'}
+
+        """
         # check if value is a Node class.
         # if so, add node to the Ordered dict
         if isinstance(value,Node):
@@ -1357,6 +1817,16 @@ class NodeDict(OrderedDict):
             else:
                 for k,v in OrderedDict(self).items():
                     v[key] = value
+
+    @property
+    def last(self):
+        """Returns the last node added to the network"""
+        return next(reversed(OrderedDict(self)))
+
+    @property
+    def first(self):
+        """Returns the first node added to the network"""
+        return next(iter(OrderedDict(self)))
 
     def attributes(self):
         """Returns the list of all the nodes attributes in the network."""
@@ -1390,82 +1860,6 @@ class NodeDict(OrderedDict):
         return list(OrderedDict(self).keys()).index(idx)
 
 
-class OrderedNodeDict(OrderedDict):
-    """An extended class of OrderedDict to save the nodes."""
-    def __call__(self):
-        print('is this working?')
-
-    def index(self,idx):
-        """Returns the list index of a node.
-
-        Parameters
-        ----------
-        index : node id
-            The index is the identifier (id) for the node. Every node
-            should have a unique id. The id has to be a string value.
-
-        Returns
-        -------
-        index : integer
-            the index in the list, where the node object is stored.
-
-        Examples
-        --------
-        >>> net = cn.Network()
-        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')])
-        >>> net.nodes.index('b')
-        1
-
-        """
-        return list(OrderedDict(self).keys()).index(idx)
-
-    def iter(self,data=False):
-        """Returns an iterator over all nodes.
-
-        Parameters
-        ----------
-        data : bool, optional (default = False)
-            If true the attributes associated with the nodes are in the iterator.
-
-        Returns
-        -------
-        node_iter : iterator
-            An iterator over all nodes in the network, with their associated
-            attributes.
-
-        Examples
-        --------
-        >>> net = cn.Network()
-        >>> net.add_edges_from([('ab','a','b'),('bc','b','c')],length = 5)
-        >>> for n in net.nodes.iter():
-        >>>    print(n)
-        a, Node a
-        b, Node b
-        c, Node c
-
-        With attributes
-
-        >>> for n in net.edges.iter(data=True):
-        >>>    print(n)
-        a, {}
-        b, {}
-        c, {}
-
-        """
-        for key,value in OrderedDict(self).items():
-            if data:
-                yield (key, value.attributes)
-            else:
-                yield key
-    @property
-    def last(self):
-        """Returns the last node added to the network"""
-        return next(reversed(OrderedDict(self)))
-
-    @property
-    def first(self):
-        """Returns the first node added to the network"""
-        return next(iter(OrderedDict(self)))
 
 class Edge(object):
     """Base class for an edge.

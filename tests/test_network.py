@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_network.py 
 # Creation  : 29 Mar 2018
-# Time-stamp: <Mit 2018-05-09 16:04 juergen>
+# Time-stamp: <Don 2018-05-10 09:48 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -31,9 +31,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import cnet
-from cnet import Node, Edge, Network
-from cnet.classes.network import NodeDict
-from cnet import SpatialNode
+from cnet import Node, Edge, Network, NodeDict, EdgeDict
 
 def test_node():
     """Test the node class."""
@@ -387,11 +385,78 @@ def test_node_dict():
         assert isinstance(a,int)
         assert isinstance(g,str)
 
-    for n in nodes(data=True):
-        print(n)
+    assert nodes.first == 'u'
+    assert nodes.last == 'w'
 
+def test_edge_dict():
+    ab = Edge('ab','a','b',length=10, type='road')
+    bc = Edge('bc','b','c',length=15)
+    edges = EdgeDict()
 
-        
+    edges[ab.id] = ab
+    edges[bc.id] = bc
+
+    assert len(edges) == 2
+    assert isinstance(edges['ab'],Edge)
+    assert edges['ab'].id == 'ab'
+    assert edges['ab']['length'] == 10
+
+    assert edges[0].id == 'ab'
+    assert edges[1].id == 'bc'
+
+    assert edges[('a','b')] == ab
+
+    edges['ab2'] = Edge('ab2','a','b')
+    assert isinstance(edges[('a','b')],list)
+
+    assert len(edges) == 3
+    del edges['ab2']
+    assert len(edges) == 2
+
+    assert edges.index('ab') == 0
+    assert edges.index('bc') == 1
+
+    edges['ab']['length'] = 5
+    assert edges['ab']['length'] == 5
+
+    assert isinstance(edges['length'],dict)
+    assert edges['type']['bc'] == None
+
+    edges['capacity'] = [100,200]
+
+    assert edges['ab']['capacity'] == 100
+
+    edges['speed'] = 30
+
+    assert edges['bc']['speed'] == 30
+
+    for e in edges:
+        assert isinstance(e,str)
+
+    for e in edges():
+        assert isinstance(e,Edge)
+
+    for a in edges('length'):
+        assert isinstance(a,int)
+
+    for a in edges('length','type'):
+        assert isinstance(a,tuple)
+
+    for e,a in edges('length',data=True):
+        assert isinstance(e,str)
+        assert isinstance(a,int)
+
+    for e,n,a in edges(nodes=True,data=True):
+        assert isinstance(e,str)
+        assert isinstance(n,tuple)
+        assert isinstance(a,dict)
+
+    for e,n in edges(nodes=True):
+        assert isinstance(e,str)
+        assert isinstance(n,tuple)
+
+    
+
 # =============================================================================
 # eof
 #
