@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_network2tikz.py 
 # Creation  : 08 May 2018
-# Time-stamp: <Don 2018-05-10 09:50 juergen>
+# Time-stamp: <Fre 2018-05-11 15:25 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -86,7 +86,6 @@ def netx():
     # net.add_edges_from([(0,1), (0,2), (2,3), (3,4), (4,2), (2,5), (5,0), (6,3),
     #                   (5,6), (6,6)])
 
-    
     return net
 
 @pytest.fixture
@@ -101,42 +100,102 @@ def neti():
                            False, False]
     return net
 
-def test_plot(net):
+@pytest.fixture
+def netl():
+    nodes = ['a','b','c','d','e','f','g']
+
+    edges = [('a','b'), ('a','c'), ('c','d'), ('d','e'), ('e','c'), ('c','f'),
+             ('f','a'), ('f','g'), ('g','g'), ('g','d')]
+    return nodes,edges
+
+@pytest.fixture
+def color_dict():
+    return {"m": "blue", "f": "pink"}
+
+@pytest.fixture
+def layer_dict():
+    return {"m": 1, "f": 2}
+
+
+def test_plot(net,color_dict):
     # print the summary of the graph (only for debugging)
-    plot(net)
 
-    for e in net.edges(data=True):
-        print(e)
+    visual_style = {}
+    visual_style["vertex_id"] = net.nodes['name']
+    visual_style["vertex_size"] = 20
+    visual_style["vertex_color"] = [color_dict[g] for g in net.nodes('gender')]
+    #visual_style["vertex_color"] = {n:color_dict[g] for n,g in net.nodes['gender'].items()}
+    visual_style["edge_color"] = 'red'
 
-    for n in net.nodes(data=True):
-        print(n)
+    visual_style["autocurve"] = True
 
-    print(net.nodes['b']['age'])
-    net.nodes()
-    
-def test_plot_networkx(netx):
-    plot(netx)
-    for e in netx.edges(data=True):
-        print(e)
-
-    for n in netx.nodes(data=True):
-        print(n)
-
-def test_plot_igraph(neti):
-    plot(neti)
-
-    for e in neti.es:
-        print(e)
-
-    for n in neti.vs:
-        print(n)
-
-    print(neti.vs.attributes())
-    print(list(neti.vs.select(1,2)))
-    print(neti.vs[1]['age'])
+    visual_style['layout'] = {'e': (0.24905178, -0.0713952),
+                              'g': (0.1208607, -0.6029225),
+                              'c': (0.10903764, -0.28264217),
+                              'a': (-0.2249151 ,  0.37137553),
+                              'd': (0.40078133, -0.29063567),
+                              'b': (-0.5414963,  1.),
+                              'f': (-0.11332007, -0.12377998)}
+    #print(color_dict[[net.nodes[i]['gender'] for i in net.nodes]])
+    #print(visual_style)
 
 
+    # for e in net.edges(data=True):
+    #     print(e)
 
+    # for n in net.nodes(data=True):
+    #     print(n)
+    plot(net,**visual_style)
+    pass
+
+def test_plot_networkx(netx,color_dict):
+    visual_style = {}
+    visual_style["vertex_id"] = nx.get_node_attributes(netx,'name')
+    visual_style["vertex_size"] = 20
+    visual_style["vertex_color"] = {n:color_dict[g] for n,g in nx.get_node_attributes(netx,'gender').items()}
+    visual_style["edge_color"] = 'red'
+
+    visual_style["autocurve"] = True
+
+    visual_style['layout'] = nx.spring_layout(netx)
+    #print(visual_style)
+    # for e in netx.edges(data=True):
+    #     print(e)
+
+    # for n in netx.nodes(data=True):
+    #     print(n)
+    # age = nx.get_node_attributes(netx,'age')
+    # print(age)
+    #plot(netx,**visual_style)
+    pass
+
+def test_plot_igraph(neti,color_dict):
+    visual_style = {}
+    visual_style["vertex_id"] = neti.vs["name"]
+    visual_style["vertex_size"] = 20
+    visual_style["node_color"] = [color_dict[gender] for gender in neti.vs["gender"]]
+
+    visual_style["link_color"] = 'red'
+
+    visual_style["autocurve"] = True
+
+    visual_style['layout'] = neti.layout('kk')
+    #print(list(neti.layout('kk')))
+    #print(visual_style)
+
+    # for e in neti.es:
+    #     print(e)
+    # for n in neti.vs:
+    #     print(n)
+
+    # visual_style = {}
+    # visual_style["vertex_id"] = neti.vs["name"]
+    #plot(neti,**visual_style)
+    pass
+
+def test_plot_list(netl):
+    #plot(netl)
+    pass
 # =============================================================================
 # eof
 #
