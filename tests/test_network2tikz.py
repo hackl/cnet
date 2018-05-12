@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_network2tikz.py 
 # Creation  : 08 May 2018
-# Time-stamp: <Fre 2018-05-11 15:25 juergen>
+# Time-stamp: <Sam 2018-05-12 15:00 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -110,7 +110,7 @@ def netl():
 
 @pytest.fixture
 def color_dict():
-    return {"m": "blue", "f": "pink"}
+    return {"m": "blue", "f": "red"}
 
 @pytest.fixture
 def layer_dict():
@@ -120,15 +120,56 @@ def layer_dict():
 def test_plot(net,color_dict):
     # print the summary of the graph (only for debugging)
 
+    # style dictionary
     visual_style = {}
-    visual_style["vertex_id"] = net.nodes['name']
-    visual_style["vertex_size"] = 20
+
+    # node styles
+    # -----------
+    visual_style["vertex_size"] = .5
     visual_style["vertex_color"] = [color_dict[g] for g in net.nodes('gender')]
-    #visual_style["vertex_color"] = {n:color_dict[g] for n,g in net.nodes['gender'].items()}
-    visual_style["edge_color"] = 'red'
+    visual_style['node_opacity'] = .5
+    #visual_style["vertex_label"] = net.nodes['name']
+    visual_style['node_label_position'] = .5
+    visual_style["node_label_distance"] = 1.5
+    visual_style["vertex_label_color"] = "green"
+    visual_style["vertex_label_size"] = 1.5
+    visual_style["vertex_shape"] = 'rectangle'
+    visual_style["vertex_style"] = 'dashed'
+    visual_style["node_math_mode"] = [True, False]
+    #visual_style["vertex_layer"] = [layer_dict[gender] for gender in g.vs["gender"]]
 
-    visual_style["autocurve"] = True
+    # visual_style['node_label_off'] = True
+    # visual_style['node_label_as_id'] = True
+    # visual_style['node_math_mode'] = True
+    # visual_style['node_rgb'] = True
+    # visual_style['node_pseudo'] = True
 
+    # edge styles
+    # -----------
+    visual_style["edge_width"] = .7
+    visual_style["edge_color"] = "red"
+    visual_style["edge_opacity"] = .5
+    visual_style["edge_curved"] = 0.1
+    visual_style["edge_label"] = "blue"
+    visual_style["edge_label_position"] = 'above'
+    visual_style["edge_label_distance"] = .7
+    visual_style["edge_label_color"] = "blue"
+    visual_style["edge_label_size"] = .3
+    visual_style["edge_style"] = 'dashed'
+    visual_style["edge_arrow_size"] = 1.2
+    visual_style["edge_arrow_width"] = 1.2
+
+    visual_style["edge_loop_size"] = 3
+    visual_style["edge_loop_position"] = 90
+    visual_style["edge_loop_shape"] = 45
+
+    # visual_style['edge_directed'] = True
+    # visual_style['edge_math_mode'] = False
+    # visual_style['edge_rgb'] = True
+    visual_style['edge_not_in_bg'] = True
+
+    # general options
+    # ---------------
     visual_style['layout'] = {'e': (0.24905178, -0.0713952),
                               'g': (0.1208607, -0.6029225),
                               'c': (0.10903764, -0.28264217),
@@ -136,16 +177,14 @@ def test_plot(net,color_dict):
                               'd': (0.40078133, -0.29063567),
                               'b': (-0.5414963,  1.),
                               'f': (-0.11332007, -0.12377998)}
-    #print(color_dict[[net.nodes[i]['gender'] for i in net.nodes]])
-    #print(visual_style)
 
+    visual_style['units'] = ('cm','cm')
+    visual_style["autocurve"] = True
+    visual_style["bbox"] = (10, 5)
+    visual_style["margin"] = {'top':.5,'bottom':.5,'left':.5,'right':.5}
 
-    # for e in net.edges(data=True):
-    #     print(e)
-
-    # for n in net.nodes(data=True):
-    #     print(n)
-    plot(net,**visual_style)
+    
+    plot(net,'test.tex',**visual_style)
     pass
 
 def test_plot_networkx(netx,color_dict):

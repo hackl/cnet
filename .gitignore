@@ -105,3 +105,4 @@ log/
 .pytest_cache/
 generated/
 auto_examples/
+/tests/tikz-network.sty
