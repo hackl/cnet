@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : __init__.py 
 # Creation  : 08 May 2018
-# Time-stamp: <Die 2018-05-08 09:41 juergen>
+# Time-stamp: <Son 2018-05-20 14:37 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -25,9 +25,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 # =============================================================================
 
-
-
-
+from .plot import plot
 
 # =============================================================================
 # eof

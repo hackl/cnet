@@ -3,16 +3,19 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to CNet's documentation!
-================================
+*************
+Visualization
+*************
+
+Basic functions
+===============
 
 Contents:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
-   classes/index
-   visualization/index
+   plot
 
 Indices and tables
 ==================
