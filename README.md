@@ -1,2 +1,2 @@
 # cnet
-Complex Networks
+Another Complex Network module for Python!

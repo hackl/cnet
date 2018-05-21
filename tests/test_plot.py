@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_network2tikz.py 
 # Creation  : 08 May 2018
-# Time-stamp: <Son 2018-05-20 17:46 juergen>
+# Time-stamp: <Mon 2018-05-21 11:00 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -42,8 +42,8 @@ def net():
     net = Network(name = 'my tikz test network',directed=True)
     net.add_edges_from([('ab','a','b'), ('ac','a','c'), ('cd','c','d'),
                         ('de','d','e'), ('ec','e','c'), ('cf','c','f'),
-                        ('fa','f','a'), ('fg','f','g'),('gg','g','g'),
-                        ('gd','g','d')])
+                        ('fa','f','a'), ('fg','f','g'), ('gd','g','d'),
+                        ('gg','g','g')])
 
     net.nodes['name'] = ['Alice', 'Bob', 'Claire', 'Dennis', 'Esther', 'Frank',
                          'George']

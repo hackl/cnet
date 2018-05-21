@@ -66,7 +66,7 @@ if config.logging.verbose:
     logging.getLogger('').addHandler(console)
 
 def logger(name,level=None):
-    """A function to generate logger for modules"""
+    """A function to generate logger for the modules."""
 
     # initialize new logger
     logger = logging.getLogger(name)

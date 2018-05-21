@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : drawing.py 
 # Creation  : 08 May 2018
-# Time-stamp: <Son 2018-05-20 17:44 juergen>
+# Time-stamp: <Mon 2018-05-21 10:40 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -108,6 +108,10 @@ class TikzNetworkDrawer(object):
 
         elif 'pathpy' in str(type(network)):
             log.debug('The network is of type "pathpy".')
+            for e in network.edges:
+                self.edges[e] = e
+            self.nodes = list(network.nodes)
+            self.directed = network.directed
 
         elif isinstance(network,tuple):
             log.debug('The network is of type "list".')
