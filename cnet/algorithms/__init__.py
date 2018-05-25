@@ -1,15 +1,15 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : __init__.py
-# Creation  : 09 Feb 2018
-# Time-stamp: <Fre 2018-05-25 13:08 juergen>
+# File      : __init__.py 
+# Creation  : 25 May 2018
+# Time-stamp: <Fre 2018-05-25 14:00 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
-# $Id$
+# $Id$ 
 #
-# Description : init file for the package
+# Description : init file
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,27 +22,18 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 # =============================================================================
 
-__title__ = 'Complex Networks'
-__version__ = '0.0.2'
-__author__ = 'Juergen Hackl'
-__copyright__ = 'Copyright 2018 Juergen Hackl'
+from .shortest_path import dijkstra
 
-from .utils.config import config
-from .utils.logger import logger
-
-from .classes import *
-from .visualization import *
-from .algorithms import *
 
 # =============================================================================
 # eof
 #
-# Local Variables:
+# Local Variables: 
 # mode: python
 # mode: linum
 # mode: auto-fill
 # fill-column: 80
-# End:
+# End:  
