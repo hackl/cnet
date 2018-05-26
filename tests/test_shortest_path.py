@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_shortest_path.py 
 # Creation  : 25 May 2018
-# Time-stamp: <Fre 2018-05-25 14:22 juergen>
+# Time-stamp: <Sam 2018-05-26 16:04 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -31,10 +31,10 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import cnet
+from cnet import Network, Path, Paths
+from cnet.algorithms.shortest_path import shortest_path, k_shortest_paths
 
-from cnet import Network
-from cnet.algorithms.shortest_path import dijkstra, dijkstra_scipy, dijkstra_scipy_2
-from scipy import sparse
+#from scipy import sparse
 import timeit
 
 
@@ -61,40 +61,8 @@ def net():
     net.add_edge('fg','f','g', length=4000.0, capacity=3600, free_flow_speed=27.78)
     return net
 
-
-
-def test_dijkstra(net):
-    net.summary()
-    cost, path = dijkstra(net,'a','f')
-    cost, path = dijkstra(net,'f','a')
-    print(cost)
-    print(path)
-
-
-    t = timeit.Timer(lambda: dijkstra(net,'a','f'))
-    print(t.timeit(number=1000))
-
-    
-def test_dijkstra_scipy(net):
-
-    cost, path = dijkstra_scipy(net,'a','f')
-    print(cost)
-    print(path)
-
-
-    t = timeit.Timer(lambda: dijkstra_scipy(net,'a','f'))
-    print(t.timeit(number=1000))
-
-    graph = net.adjacency_matrix()
-    i1 = net.nodes.index('a')
-    i2 = net.nodes.index('f')
-    t = timeit.Timer(lambda: dijkstra_scipy_2(graph,i1,i2))
-    print(t.timeit(number=1000))
-
-
-
-def test_larger_network():
-
+@pytest.fixture
+def large_net():
     import gzip
     from xml.dom.minidom import parse, parseString
 
@@ -114,29 +82,84 @@ def test_larger_network():
         u = e.attributes['from'].value
         v = e.attributes['to'].value
         net.add_edge(id,u,v)
+    return net
 
-    net.summary()
+
+
+def test_shortest_path(net):
+
+    p = shortest_path(net,'a','f',weight='length')
+
+    assert isinstance(p,Path)
+    assert p.weight() == 12000
+    assert len(p) == 4
+    assert p.edges['ab']['length'] == 5000.0
+
+    p = shortest_path(net,'a','f',weight='length',mode=None)
+
+    assert isinstance(p,tuple)
+    assert p[0] == 12000
+    assert len(p[1]) == 4
+    assert 'a' in p[1]
+    assert p[1] == ['a','b','d','f']
+
+    adj = net.adjacency_matrix(weight='length')
+    s = net.nodes.index('a')
+    t = net.nodes.index('f')
+
+    p = shortest_path(adj,s,t)
+
+    assert isinstance(p,tuple)
+    assert p[0] == 12000
+    assert len(p[1]) == 4
+    assert p[1] == [0,1,3,5] #'a'=0,'b'=1,'d'=3,'f'=5
+
+    p = shortest_path(net,'f','a',weight='length')
+
+    if net.directed:
+        assert isinstance(p,Path)
+        assert p.weight() == float('inf')
+        assert len(p) == 0
+
+    # TODO implement sp also for spatial networks
+
+def test_k_shortest_paths(net):
+    k_p = k_shortest_paths(net,'a','f', k=4, weight='length')
+
+    assert isinstance(k_p,Paths)
+    assert isinstance(k_p[0],Path)
+    assert len(k_p) == 4
+
+    k_p = k_shortest_paths(net,'a','f', k=4, weight='length',mode=None)
+
+    assert isinstance(k_p,list)
+    assert isinstance(k_p[0],tuple)
+    assert len(k_p) == 4
+
+def test_larger_network(large_net):
+    large_net.summary()
 
     u = '1751873987'
     v = '237065489_1L1'
     num = 10
+    k = 3
 
-    t = timeit.Timer(lambda: dijkstra_scipy(net,u,v))
+    t = timeit.Timer(lambda: shortest_path(large_net,u,v))
     print(t.timeit(number=num))
 
+    adj = large_net.adjacency_matrix()
+    a = large_net.nodes.index(u)
+    b = large_net.nodes.index(v)
 
-    t = timeit.Timer(lambda: dijkstra_scipy(net,u,v))
+    t = timeit.Timer(lambda: shortest_path(adj,a,b))
     print(t.timeit(number=num))
 
-    t = timeit.Timer(lambda: net.adjacency_matrix())
-    print(t.timeit(number=1))
-    
-    graph = net.adjacency_matrix()
-    i1 = net.nodes.index(u)
-    i2 = net.nodes.index(v)
-
-    t = timeit.Timer(lambda: dijkstra_scipy_2(graph,i1,i2))
+    t = timeit.Timer(lambda: k_shortest_paths(large_net,u,v,k))
     print(t.timeit(number=num))
+
+    t = timeit.Timer(lambda: k_shortest_paths(adj,a,b,k))
+    print(t.timeit(number=num))
+
 
 # =============================================================================
 # eof

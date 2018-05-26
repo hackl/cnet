@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py 
 # Creation  : 11 Apr 2018
-# Time-stamp: <Don 2018-05-10 09:49 juergen>
+# Time-stamp: <Sam 2018-05-26 14:46 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -154,6 +154,7 @@ class Network(object):
 
         # an ordered dictionary containing edge objects
         self.edges = EdgeDict()
+        self.edges.directed = directed
 
         # Classes of the Node and Edge objects
         # TODO: Probably there is a better solution to have different Node and
@@ -675,11 +676,13 @@ class Network(object):
                 _edges.extend(self.nodes_to_edges_map()[(v,u)])
             if len(_edges) < 1:
                 return False
-            elif len(_edges) > 1:
+            elif len(_edges) > 1 and self.directed:
                 log.warn('From node "{}" to node "{}", {} edges exist with'
                          ' ids: {}! Please, us the correct edge id instead of'
                          ' the node ids!'.format(e[0],e[1],len(_edges),
                                                  ', '.join(_edges)))
+                return sum([e in self.edges for e in _edges]) > 0
+            elif len(_edges) > 1 and not self.directed:
                 return sum([e in self.edges for e in _edges]) > 0
             else:
                 return _edges[0] in self.edges
@@ -1199,6 +1202,10 @@ class EdgeDict(OrderedDict):
     bc ('b', 'c') {'capacity': 200, 'length': 15, 'speed': 30}
 
     """
+    def __init__(self, *args, **kwds):
+        super().__init__(self,*args, **kwds)
+        self._directed = True
+
     def __call__(self,*args, nodes=False, data=False, **kwds):
         """Returns an iterator over all nodes.
 
@@ -1370,6 +1377,13 @@ class EdgeDict(OrderedDict):
             for e in OrderedDict(self).values():
                 if key == (e.u.id,e.v.id):
                     _edges.append(e)
+                # return also edge if Network is undirected and node tuple has
+                # the wrong order
+                if not self.directed and key == (e.v.id,e.u.id):
+                    _e = deepcopy(e)
+                    _e._u = e.v
+                    _e._v = e.u
+                    _edges.append(_e)
 
             if len(_edges) == 1:
                 return _edges[0]
@@ -1820,13 +1834,23 @@ class NodeDict(OrderedDict):
 
     @property
     def last(self):
-        """Returns the last node added to the network"""
+        """Returns the last node added to the network."""
         return next(reversed(OrderedDict(self)))
 
     @property
     def first(self):
-        """Returns the first node added to the network"""
+        """Returns the first node added to the network."""
         return next(iter(OrderedDict(self)))
+
+    @property
+    def directed(self):
+        """Returns True if the Network is directed."""
+        return self._directed
+
+    @directed.setter
+    def directed(self,directed):
+        """Setts the EdgeList to directed or undirected."""
+        self._directed = directed
 
     def attributes(self):
         """Returns the list of all the nodes attributes in the network."""

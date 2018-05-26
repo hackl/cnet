@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : shortest_path.py 
 # Creation  : 25 May 2018
-# Time-stamp: <Fre 2018-05-25 13:59 juergen>
+# Time-stamp: <Sam 2018-05-26 15:58 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -27,58 +27,214 @@
 
 import heapq
 
-from scipy.sparse import csgraph
+from cnet import logger, Network, Path, Paths, Edge
+from cnet.utils.exceptions import CnetError, CnetNotImplemented
 
-def dijkstra(network, source, sink, weight=None):
+from scipy.sparse import csgraph, find, isspmatrix
+log = logger(__name__)
 
-    queue, checked = [(0, source, [])], set()
-    while queue:
-        (cost, v, path) = heapq.heappop(queue)
-        if v not in checked:
-            path = path + [v]
-            checked.add(v)
-            if v == sink:
-                return cost, path
-            for e,o in network.nodes[v].heads:
-                _e = network.edges[e]
-                if o == 0:
-                    _v = _e.v.id
-                elif o == 1:
-                    _v = _e.u.id
-                heapq.heappush(queue, (cost+_e.weight(weight), _v, path))
+def shortest_path(network, source, sink, weight=None, mode='path', method='auto'):
 
-def dijkstra_scipy(network, source, sink, weight=None):
+    # check and format inputs
+    adj, source, sink = _check_inputs(network, source, sink, weight=weight)
 
-    graph = network.adjacency_matrix()
+    # calculate shortest path
+    try:
+        cost, path = _shortest_path(adj, source, sink, method=method)
+    except:
+        cost = float('inf')
+        path = []
+        log.warn('No valid path was found!')
+    # If network is a network object and type is path,
+    # a Path object will be returned
+    if isinstance(network,Network) and mode == 'path':
+        p = Path(weight=cost)
+        if len(path) > 0:
+            for i in range(len(path)-1):
+                u = network.nodes[path[i]].id
+                v = network.nodes[path[i+1]].id
+                e = network.edges[(u,v)]
+                p.add_edge(e)
+        return p
+    elif isinstance(network,Network) and mode != 'path':
+        path = [network.nodes[p].id for p in path]
+        return cost, path
+    else:
+        return cost, path
 
-    i1 = network.nodes.index(source)
-    i2 = network.nodes.index(sink)
+def k_shortest_paths(network, source, sink, k, weight=None, mode='paths', method='auto'):
+    # check inputs
+    adj, source, sink = _check_inputs(network, source, sink, weight=weight)
 
-    cost, predecessors = csgraph.dijkstra(graph, indices = i1, return_predecessors = True)
+    # calculate k shortest paths
+    try:
+        paths = _k_shortest_paths(adj, source, sink, k, method=method)
+    except:
+        paths = []
+        log.warn('No valid paths were found!')
 
+    # If network is a network object and type is path,
+    # a Path object will be returned
+    if isinstance(network,Network) and mode == 'paths':
+        P = Paths()
+        for path in paths:
+            p = Path(weight=path[0])
+            if len(path[1]) > 0:
+                for i in range(len(path[1])-1):
+                    u = network.nodes[int(path[1][i])].id
+                    v = network.nodes[int(path[1][i+1])].id
+                    e = network.edges[(u,v)]
+                    p.add_edge(e)
+                P.add_path(p)
+        return P
+    elif isinstance(network,Network) and mode != 'path':
+        P = []
+        for path in paths:
+            cost = path[0]
+            path = [network.nodes[int(p)].id for p in path[1]]
+            P.append((cost,path))
+        return P
+
+    else:
+        return paths
+
+def _check_inputs(network, source, sink, weight=None):
+
+    # check if a network object or a adjacency matrix is given
+    if isinstance(network,Network):
+        adj = network.adjacency_matrix(weight=weight)
+    elif isspmatrix(network):
+        adj = network
+    else:
+        log.error('Network is not defined properly! Only networks of type'
+                  '<Network> or sparse scipy matrices can be handled.')
+        raise CnetError
+
+    # check source or sink nodes
+    if isinstance(network,Network) and isinstance(source,str):
+        source = network.nodes.index(source)
+    if isinstance(network,Network) and isinstance(sink,str):
+        sink = network.nodes.index(sink)
+    if not isinstance(source,int) or not isinstance(sink,int):
+        log.error('Nodes are not defined properly! Only the node ids or the '
+                  'node indices are valid inputs!')
+        raise CnetError
+
+    return adj, source, sink
+
+def _shortest_path(adj, source, sink, method='auto'):
+    cost, predecessors = csgraph.shortest_path(adj, indices = source,
+                                               method=method,
+                                               return_predecessors = True)
     path = []
-    i = i2
-    while i != i1:
-        path.append(i)
+    i = sink
+    while i != source:
+        path.append(int(i))
         i = predecessors[i]
-    path.append(i1)
-    path = [network.nodes[int(i)].id for i in path[::-1]]
+    path.append(source)
+    return cost[sink], path[::-1]
 
-    return cost[i2], path
+def _k_shortest_paths(adj, source, sink, k, method='auto'):
+
+    cost, sp = _shortest_path(adj, source, sink, method=method)
+
+    top_k_path_set, paths, used, counter = [(cost, sp)], [sp], set(), 0
+    for i in range(len(sp)-1):
+        used.add((sp[i], sp[i+1]))
+
+    # iteration
+    for i in range(k-1):
+        # get spur ring and rooting nodes
+        for j in range(len(paths[counter])-1):
+            root = paths[counter][j]
+            root_cost = 0
+            if j != 0:
+                for r in range(j):
+                    root_cost += adj[(paths[counter][r], paths[counter][r+1])]
+            for n in find(adj[root])[1]:
+                if (root, n) not in used:
+                    spur_cost, spur_path = _shortest_path(adj, n, sink, method=method)
+                    p_cost = root_cost + adj[(root,n)] + spur_cost
+                    p_path = paths[counter][:j+1]+spur_path
+                    top_k_path_set.append((p_cost, p_path))
+                    for p in range(len(p_path) - 1):
+                        used.add((p_path[p], p_path[p+1]))
+    sorted_paths = sorted(top_k_path_set)
+    #return sorted_paths
+    if k > len(sorted_paths):
+        log.warn('Less then k={} paths were found!'.format(k))
+        return sorted_paths
+    else:
+        return sorted_paths[:k]
 
 
-def dijkstra_scipy_2(graph, i1, i2, weight=None):
+# # My pure Python implementation
 
-    cost, predecessors = csgraph.dijkstra(graph, indices = i1, return_predecessors = True)
+# def dijkstra(network, source, sink, weight=None):
+#     queue, checked = [(0, source, [])], set()
+#     while queue:
+#         (cost, v, path) = heapq.heappop(queue)
+#         if v not in checked:
+#             path = path + [v]
+#             checked.add(v)
+#             if v == sink:
+#                 return cost, path
+#             for e,o in network.nodes[v].heads:
+#                 _e = network.edges[e]
+#                 if o == 0:
+#                     _v = _e.v.id
+#                 elif o == 1:
+#                     _v = _e.u.id
+#                 heapq.heappush(queue, (cost+_e.weight(weight), _v, path))
 
-    path = []
-    i = i2
-    while i != i1:
-        path.append(i)
-        i = predecessors[i]
-    path.append(i1)
 
-    return cost[i2], path
+# def yen_k_sp(network, source, sink, k, weight=None):
+
+#     cost, sp = dijkstra(network, source, sink,weight=weight)
+
+#     n2e = network.nodes_to_edges_map()
+
+#     top_k_path_set, paths, used, counter = [(cost, sp)], [sp], set(), 0
+#     for i in range(len(sp)-1):
+#         used.add((sp[i], sp[i+1]))
+#     # iteration
+#     for i in range(k-1):
+#         # get spur ring and rooting nodes
+#         for j in range(len(paths[counter])-1):
+#             root = paths[counter][j]
+#             root_cost = 0
+#             if j != 0:
+#                 for r in range(j):
+#                     root_cost += network.edges[n2e[(paths[counter][r], paths[counter][r+1])][0]].weight(weight)
+#             for e,o in network.nodes[root].heads:
+#                 # get spur path and spur cost
+#                 _e = network.edges[e]
+#                 if o == 0:
+#                     n = _e.v.id
+#                 elif o == 1:
+#                     n = _e.u.id
+#                 if (root, n) not in used:
+#                     spur_cost, spur_path = dijkstra(network, n, sink, weight=weight)
+#                     p_cost = root_cost + network.edges[n2e[(root, n)][0]].weight(weight) + spur_cost
+#                     p_path = paths[counter][:j+1]+spur_path
+#                     top_k_path_set.append((p_cost, p_path))
+#                     for p in range(len(p_path) - 1):
+#                         used.add((p_path[p], p_path[p+1]))
+#     sorted_paths = sorted(top_k_path_set)
+#     #return sorted_paths
+#     if k > len(sorted_paths):
+#         return sorted_paths
+#     else:
+#         return sorted_paths[:k]
+
+
+
+
+
+
+
+
+
 
 
 # =============================================================================
