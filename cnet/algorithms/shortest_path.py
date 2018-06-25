@@ -1,13 +1,13 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : shortest_path.py 
+# File      : shortest_path.py
 # Creation  : 25 May 2018
-# Time-stamp: <Sam 2018-05-26 15:58 juergen>
+# Time-stamp: <Mon 2018-06-25 08:42 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
-# $Id$ 
+# $Id$
 #
 # Description : Algorithms to find the shortest path between two nodes
 #
@@ -22,7 +22,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
 import heapq
@@ -33,8 +33,8 @@ from cnet.utils.exceptions import CnetError, CnetNotImplemented
 from scipy.sparse import csgraph, find, isspmatrix
 log = logger(__name__)
 
-def shortest_path(network, source, sink, weight=None, mode='path', method='auto'):
 
+def shortest_path(network, source, sink, weight=None, mode='path', method='auto'):
     # check and format inputs
     adj, source, sink = _check_inputs(network, source, sink, weight=weight)
 
@@ -47,20 +47,21 @@ def shortest_path(network, source, sink, weight=None, mode='path', method='auto'
         log.warn('No valid path was found!')
     # If network is a network object and type is path,
     # a Path object will be returned
-    if isinstance(network,Network) and mode == 'path':
+    if isinstance(network, Network) and mode == 'path':
         p = Path(weight=cost)
         if len(path) > 0:
             for i in range(len(path)-1):
                 u = network.nodes[path[i]].id
                 v = network.nodes[path[i+1]].id
-                e = network.edges[(u,v)]
+                e = network.edges[(u, v)]
                 p.add_edge(e)
         return p
-    elif isinstance(network,Network) and mode != 'path':
+    elif isinstance(network, Network) and mode != 'path':
         path = [network.nodes[p].id for p in path]
         return cost, path
     else:
         return cost, path
+
 
 def k_shortest_paths(network, source, sink, k, weight=None, mode='paths', method='auto'):
     # check inputs
@@ -75,7 +76,7 @@ def k_shortest_paths(network, source, sink, k, weight=None, mode='paths', method
 
     # If network is a network object and type is path,
     # a Path object will be returned
-    if isinstance(network,Network) and mode == 'paths':
+    if isinstance(network, Network) and mode == 'paths':
         P = Paths()
         for path in paths:
             p = Path(weight=path[0])
@@ -83,25 +84,26 @@ def k_shortest_paths(network, source, sink, k, weight=None, mode='paths', method
                 for i in range(len(path[1])-1):
                     u = network.nodes[int(path[1][i])].id
                     v = network.nodes[int(path[1][i+1])].id
-                    e = network.edges[(u,v)]
+                    e = network.edges[(u, v)]
                     p.add_edge(e)
                 P.add_path(p)
         return P
-    elif isinstance(network,Network) and mode != 'path':
+    elif isinstance(network, Network) and mode != 'path':
         P = []
         for path in paths:
             cost = path[0]
             path = [network.nodes[int(p)].id for p in path[1]]
-            P.append((cost,path))
+            P.append((cost, path))
         return P
 
     else:
         return paths
 
+
 def _check_inputs(network, source, sink, weight=None):
 
     # check if a network object or a adjacency matrix is given
-    if isinstance(network,Network):
+    if isinstance(network, Network):
         adj = network.adjacency_matrix(weight=weight)
     elif isspmatrix(network):
         adj = network
@@ -111,21 +113,22 @@ def _check_inputs(network, source, sink, weight=None):
         raise CnetError
 
     # check source or sink nodes
-    if isinstance(network,Network) and isinstance(source,str):
+    if isinstance(network, Network) and isinstance(source, str):
         source = network.nodes.index(source)
-    if isinstance(network,Network) and isinstance(sink,str):
+    if isinstance(network, Network) and isinstance(sink, str):
         sink = network.nodes.index(sink)
-    if not isinstance(source,int) or not isinstance(sink,int):
+    if not isinstance(source, int) or not isinstance(sink, int):
         log.error('Nodes are not defined properly! Only the node ids or the '
                   'node indices are valid inputs!')
         raise CnetError
 
     return adj, source, sink
 
+
 def _shortest_path(adj, source, sink, method='auto'):
-    cost, predecessors = csgraph.shortest_path(adj, indices = source,
+    cost, predecessors = csgraph.shortest_path(adj, indices=source,
                                                method=method,
-                                               return_predecessors = True)
+                                               return_predecessors=True)
     path = []
     i = sink
     while i != source:
@@ -133,6 +136,7 @@ def _shortest_path(adj, source, sink, method='auto'):
         i = predecessors[i]
     path.append(source)
     return cost[sink], path[::-1]
+
 
 def _k_shortest_paths(adj, source, sink, k, method='auto'):
 
@@ -153,14 +157,15 @@ def _k_shortest_paths(adj, source, sink, k, method='auto'):
                     root_cost += adj[(paths[counter][r], paths[counter][r+1])]
             for n in find(adj[root])[1]:
                 if (root, n) not in used:
-                    spur_cost, spur_path = _shortest_path(adj, n, sink, method=method)
-                    p_cost = root_cost + adj[(root,n)] + spur_cost
+                    spur_cost, spur_path = _shortest_path(
+                        adj, n, sink, method=method)
+                    p_cost = root_cost + adj[(root, n)] + spur_cost
                     p_path = paths[counter][:j+1]+spur_path
                     top_k_path_set.append((p_cost, p_path))
                     for p in range(len(p_path) - 1):
                         used.add((p_path[p], p_path[p+1]))
     sorted_paths = sorted(top_k_path_set)
-    #return sorted_paths
+    # return sorted_paths
     if k > len(sorted_paths):
         log.warn('Less then k={} paths were found!'.format(k))
         return sorted_paths
@@ -228,21 +233,12 @@ def _k_shortest_paths(adj, source, sink, k, method='auto'):
 #         return sorted_paths[:k]
 
 
-
-
-
-
-
-
-
-
-
 # =============================================================================
 # eof
 #
-# Local Variables: 
+# Local Variables:
 # mode: python
 # mode: linum
 # mode: auto-fill
 # fill-column: 80
-# End:  
+# End:
