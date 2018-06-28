@@ -1,13 +1,13 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : network.py 
+# File      : network.py
 # Creation  : 11 Apr 2018
-# Time-stamp: <Sam 2018-05-26 14:46 juergen>
+# Time-stamp: <Don 2018-06-28 16:51 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
-# $Id$ 
+# $Id$
 #
 # Description : Basic class for networks
 #
@@ -22,7 +22,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
 import pickle
@@ -34,6 +34,7 @@ from collections import OrderedDict, defaultdict
 from cnet import config, logger
 from cnet.utils.exceptions import CnetError
 log = logger(__name__)
+
 
 class Network(object):
     """ Base class for networks.
@@ -123,8 +124,9 @@ class Network(object):
     SpatialNetwork
     RoadNetwork
 
-    
+
     """
+
     def __init__(self, directed=True, **attr):
         """Initialize a network with direction, name and attributes.
 
@@ -173,7 +175,7 @@ class Network(object):
     def __repr__(self):
         """Return the description of the network (see :meth:`_desc`) with the id
         of the network."""
-        return '<{} object {} at 0x{}x>'.format(self._desc(),self.name, id(self))
+        return '<{} object {} at 0x{}x>'.format(self._desc(), self.name, id(self))
 
     def _desc(self):
         """Return a string *Network()*."""
@@ -185,7 +187,7 @@ class Network(object):
             return self.attributes[key]
         except Exception as error:
             log.error('No attribute with key "{}" is defined for network'
-                      ' "{}".'.format(key,self.id))
+                      ' "{}".'.format(key, self.id))
             raise
 
     def __setitem__(self, key, item):
@@ -196,7 +198,7 @@ class Network(object):
     def shape(self):
         """Return the size of the Network as tuple of number of nodes and number
         of edges"""
-        return self.number_of_nodes(),self.number_of_edges()
+        return self.number_of_nodes(), self.number_of_edges()
 
     @property
     def directed(self):
@@ -213,7 +215,7 @@ class Network(object):
         """Set the name of the network."""
         self.attributes['name'] = s
 
-    def update(self,**attr):
+    def update(self, **attr):
         """Update the attributes of the network.
 
         Parameters
@@ -273,7 +275,7 @@ class Network(object):
         {'bc': ('b', 'c'), 'ab': ('a', 'b')}
 
         """
-        return {k:(v.u.id,v.v.id) for k,v in self.edges.items()}
+        return {k: (v.u.id, v.v.id) for k, v in self.edges.items()}
 
     def node_to_edges_map(self):
         """Returns a dictionary which maps the node id to the connected edge
@@ -294,7 +296,7 @@ class Network(object):
 
         """
         _dict = defaultdict(list)
-        for e,n in self.edge_to_nodes_map().items():
+        for e, n in self.edge_to_nodes_map().items():
             _dict[n[0]].append(e)
             _dict[n[1]].append(e)
         return _dict
@@ -322,10 +324,10 @@ class Network(object):
 
         """
         _dict = defaultdict(list)
-        for e,n in self.edge_to_nodes_map().items():
+        for e, n in self.edge_to_nodes_map().items():
             _dict[n].append(e)
             if not self.directed:
-                _dict[n[1],n[0]].append(e)
+                _dict[n[1], n[0]].append(e)
         return _dict
 
     def add_node(self, n, **attr):
@@ -359,8 +361,8 @@ class Network(object):
 
         """
         # check if n is not a Node object
-        if not isinstance(n,self.NodeClass):
-            _node = self.NodeClass(n,**attr)
+        if not isinstance(n, self.NodeClass):
+            _node = self.NodeClass(n, **attr)
         else:
             _node = n
             _node.update(**attr)
@@ -402,7 +404,7 @@ class Network(object):
 
         """
         for n in nodes:
-            self.add_node(n,**attr)
+            self.add_node(n, **attr)
 
     def remove_node(self, n):
         """Remove node n and all adjacent edges.
@@ -511,13 +513,13 @@ class Network(object):
 
         """
         # check if e is not an Edge object
-        if not isinstance(e,self.EdgeClass):
+        if not isinstance(e, self.EdgeClass):
             if u is not None and v is not None:
                 if u in self.nodes:
                     u = self.nodes[u]
                 if v in self.nodes:
                     v = self.nodes[v]
-                _edge = self.EdgeClass(e,u,v,**attr)
+                _edge = self.EdgeClass(e, u, v, **attr)
             else:
                 log.error('No nodes are defined for new edge "{}!"'.format(e))
                 raise CnetError
@@ -535,12 +537,12 @@ class Network(object):
         if _edge.id not in self.edges:
             self.edges[_edge.id] = _edge
 
-            self.nodes[_edge.u.id].heads.append((_edge.id,0))
-            self.nodes[_edge.v.id].tails.append((_edge.id,0))
+            self.nodes[_edge.u.id].heads.append((_edge.id, 0))
+            self.nodes[_edge.v.id].tails.append((_edge.id, 0))
 
             if not self.directed:
-                self.nodes[_edge.u.id].tails.append((_edge.id,1))
-                self.nodes[_edge.v.id].heads.append((_edge.id,1))
+                self.nodes[_edge.u.id].tails.append((_edge.id, 1))
+                self.nodes[_edge.v.id].heads.append((_edge.id, 1))
 
         else:
             log.warn('The edge with id: {} is already part of the'
@@ -579,16 +581,16 @@ class Network(object):
 
         """
         for _edge in edges:
-            if not isinstance(_edge,self.EdgeClass):
+            if not isinstance(_edge, self.EdgeClass):
                 try:
-                    e,u,v = _edge
+                    e, u, v = _edge
                 except:
                     log.error('Edge "{}" must be defined by an edge id "e" and two'
                               ' nodes "u" and "v"!'.format(_edge))
                     raise
-                self.add_edge(e,u,v,**attr)
+                self.add_edge(e, u, v, **attr)
             else:
-                self.add_edge(_edge,**attr)
+                self.add_edge(_edge, **attr)
 
     def remove_edge(self, e):
         """Remove the edge e between u and v.
@@ -607,7 +609,7 @@ class Network(object):
 
         """
         # check if e is given in terms of (u,v)
-        if isinstance(e,tuple):
+        if isinstance(e, tuple):
             _edges = self.nodes_to_edges_map()[e]
 
             if len(_edges) < 1:
@@ -617,18 +619,18 @@ class Network(object):
             elif len(_edges) > 1:
                 log.error('From node "{}" to node "{}", {} edges exist with'
                           ' ids: {}! Please, us the correct edge id instead of'
-                          ' the node ids!'.format(e[0],e[1],len(_edges),
+                          ' the node ids!'.format(e[0], e[1], len(_edges),
                                                   ', '.join(_edges)))
                 raise CnetError
             e = _edges[0]
 
         if e in self.edges:
             # remove edge from heads and tails counter of the nodes
-            self.edges[e].u.heads.remove((e,0))
-            self.edges[e].v.tails.remove((e,0))
+            self.edges[e].u.heads.remove((e, 0))
+            self.edges[e].v.tails.remove((e, 0))
             if not self.directed:
-                self.edges[e].u.tails.remove((e,1))
-                self.edges[e].v.heads.remove((e,1))
+                self.edges[e].u.tails.remove((e, 1))
+                self.edges[e].v.heads.remove((e, 1))
             # delete the edge
             del self.edges[e]
 
@@ -666,20 +668,20 @@ class Network(object):
         raised additionally to the has_edge.
 
         """
-        if isinstance(e,tuple):
+        if isinstance(e, tuple):
             if self.directed:
                 _edges = self.nodes_to_edges_map()[e]
             else:
-                u,v = e
+                u, v = e
                 _edges = []
-                _edges.extend(self.nodes_to_edges_map()[(u,v)])
-                _edges.extend(self.nodes_to_edges_map()[(v,u)])
+                _edges.extend(self.nodes_to_edges_map()[(u, v)])
+                _edges.extend(self.nodes_to_edges_map()[(v, u)])
             if len(_edges) < 1:
                 return False
             elif len(_edges) > 1 and self.directed:
                 log.warn('From node "{}" to node "{}", {} edges exist with'
                          ' ids: {}! Please, us the correct edge id instead of'
-                         ' the node ids!'.format(e[0],e[1],len(_edges),
+                         ' the node ids!'.format(e[0], e[1], len(_edges),
                                                  ', '.join(_edges)))
                 return sum([e in self.edges for e in _edges]) > 0
             elif len(_edges) > 1 and not self.directed:
@@ -700,7 +702,7 @@ class Network(object):
         """
         return len(self.edges)
 
-    def weights(self,weight='weight'):
+    def weights(self, weight='weight'):
         """Return an iterator over the weights of the edges.
 
         Parameters
@@ -731,7 +733,7 @@ class Network(object):
         3
 
         """
-        for e,E in self.edges.items():
+        for e, E in self.edges.items():
             yield E.weight(weight=weight)
 
     def adjacency_matrix(self, weight=None, transposed=False):
@@ -877,18 +879,18 @@ class Network(object):
             _degree = self.adjacency_matrix(weight=weight).sum(axis=0).T
 
         # check if given nodes is a single node
-        if nodes is not None and not isinstance(nodes,list):
+        if nodes is not None and not isinstance(nodes, list):
             idx = self.nodes.index(nodes)
             return _degree.item(idx)
-        elif nodes is not None and isinstance(nodes,list):
+        elif nodes is not None and isinstance(nodes, list):
             idx = [self.nodes.index(n) for n in nodes]
         else:
             idx = list(range(self.number_of_nodes()))
             nodes = list(self.nodes.keys())
 
-        return {nodes[i]:_degree.item(i) for i in idx}
+        return {nodes[i]: _degree.item(i) for i in idx}
 
-    def transition_matrix(self,weight=None):
+    def transition_matrix(self, weight=None):
         """Returns a transition matrix of the network.
 
         The transition matrix is the matrix
@@ -916,8 +918,7 @@ class Network(object):
         D = sparse.diags(1/A.sum(axis=1).A1)
         return D*A
 
-
-    def laplacian_matrix(self,weight=None):
+    def laplacian_matrix(self, weight=None):
         """
         Returns the transposed normalized Laplacian matrix.
 
@@ -947,7 +948,7 @@ class Network(object):
 
         return I - T
 
-    def save(self,filename,format=None):
+    def save(self, filename, format=None):
         """Save the network to file.
 
         Note
@@ -988,7 +989,7 @@ class Network(object):
             raise NotImplementedError
 
     @classmethod
-    def load(cls,filename,format=None):
+    def load(cls, filename, format=None):
         """Load network from a file.
 
         Note
@@ -1035,7 +1036,8 @@ class Network(object):
         if isinstance(network, Network):
             return network
         else:
-            log.error('The file "{}" does not contain a Network object'.format(filename))
+            log.error(
+                'The file "{}" does not contain a Network object'.format(filename))
             raise AttributeError
 
     def copy(self):
@@ -1054,8 +1056,9 @@ class Network(object):
         """
         return deepcopy(self)
 
-    def has_path(self,path):
+    def has_path(self, path):
         pass
+
 
 class EdgeDict(OrderedDict):
     """A container to save the edges.
@@ -1152,6 +1155,21 @@ class EdgeDict(OrderedDict):
     >>> edges['speed']
     {ab:30, bc:30}
 
+    If the attributes are given as a dictionary with the edge ids as keys, each
+    value is assigned to the corresponding edge. Edges where no edge ids are
+    given in the dictionary get a None value as entry.
+
+    >>> edges['crossing'] = {'ab': True}
+    >>> edges['crossing']
+     {'ab': True, 'bc': None}
+
+    If the keys used in the dictionary do not correspond to the edge ids, the
+    dictionary is added as an edge attribute instead.
+
+    >>> edges['vehicles'] = {'a': 'cars', 'b': 'trucks'}
+    >>> edges['vehicles']
+    {'ab': {'b': 'trucks', 'a': 'cars'}, 'bc': {'b': 'trucks', 'a': 'cars'}}
+
     Also the :py:class:`EdgeDict` can be used as an iterator function.
 
     Iterating through all edge objects.
@@ -1202,11 +1220,12 @@ class EdgeDict(OrderedDict):
     bc ('b', 'c') {'capacity': 200, 'length': 15, 'speed': 30}
 
     """
-    def __init__(self, *args, **kwds):
-        super().__init__(self,*args, **kwds)
-        self._directed = True
 
-    def __call__(self,*args, nodes=False, data=False, **kwds):
+    def __init__(self, *args, **kwds):
+        super().__init__(self, *args, **kwds)
+        self.directed = True
+
+    def __call__(self, *args, nodes=False, data=False, **kwds):
         """Returns an iterator over all nodes.
 
         Parameters
@@ -1275,14 +1294,14 @@ class EdgeDict(OrderedDict):
         bc ('b', 'c') {'capacity': 200, 'length': 15, 'speed': 30}
 
         """
-        for key,value in OrderedDict(self).items():
+        for key, value in OrderedDict(self).items():
             _yield = []
             # check if data enabled
             if data or nodes:
                 _yield.append(key)
             # check if nodes are enabled
             if nodes:
-                _yield.append((value.u.id,value.v.id))
+                _yield.append((value.u.id, value.v.id))
             # check if arguments are defined
             if len(args) > 0:
                 _attributes = []
@@ -1312,7 +1331,7 @@ class EdgeDict(OrderedDict):
             else:
                 yield tuple(_yield)
 
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         """Returns an item dependent on the key value.
 
         If the key is associated with an edge id, the :py:class:`Edge` will be
@@ -1372,14 +1391,14 @@ class EdgeDict(OrderedDict):
         if key in OrderedDict(self):
             return OrderedDict(self)[key]
         # if key is a tuple, check if there are edges with these node ids
-        elif isinstance(key,tuple):
+        elif isinstance(key, tuple):
             _edges = []
             for e in OrderedDict(self).values():
-                if key == (e.u.id,e.v.id):
+                if key == (e.u.id, e.v.id):
                     _edges.append(e)
                 # return also edge if Network is undirected and node tuple has
                 # the wrong order
-                if not self.directed and key == (e.v.id,e.u.id):
+                if not self.directed and key == (e.v.id, e.u.id):
                     _e = deepcopy(e)
                     _e._u = e.v
                     _e._v = e.u
@@ -1393,13 +1412,13 @@ class EdgeDict(OrderedDict):
                 log.error('There is no edge with nodes {}!'.format(key))
                 raise CnetError
         # if key is a int, return the Edge at the index
-        elif isinstance(key,int):
+        elif isinstance(key, int):
             return list(OrderedDict(self).values())[key]
         # check if there is an attribute with the name and return a dict of
         # attribute values for the edges
         elif key in self.attributes():
             _dict = {}
-            for k,v in OrderedDict(self).items():
+            for k, v in OrderedDict(self).items():
                 if key in v.attributes:
                     _dict[k] = v[key]
                 else:
@@ -1411,7 +1430,7 @@ class EdgeDict(OrderedDict):
                       ''.format(key))
             raise CnetError
 
-    def __setitem__(self,key,value):
+    def __setitem__(self, key, value):
         """Set and modify items of the EdgeDict values.
 
         If the value is an instance of a :py:class:`Edge` class the edge is
@@ -1441,22 +1460,65 @@ class EdgeDict(OrderedDict):
         >>> edges['speed']
         {ab:30, bc:30}
 
+        If the attributes are given as a dictionary with the edge ids as keys,
+        each value is assigned to the corresponding edge. Edges where no edge
+        ids are given in the dictionary get a None value as entry.
+
+        >>> edges['crossing'] = {'ab': True}
+        >>> edges['crossing']
+         {'ab': True, 'bc': None}
+
+        If the keys used in the dictionary do not correspond to the edge ids,
+        the dictionary is added as an edge attribute instead.
+
+        >>> edges['vehicles'] = {'a': 'cars', 'b': 'trucks'}
+        >>> edges['vehicles']
+        {'ab': {'b': 'trucks', 'a': 'cars'}, 'bc': {'b': 'trucks', 'a': 'cars'}}
+
+
         """
         # check if value is a Node class.
         # if so, add node to the Ordered dict
-        if isinstance(value,Edge):
+        if isinstance(value, Edge):
             super().__setitem__(key, value)
-        else:
-            if isinstance(value,list):
-                # check if list is shorter then the dict
-                # if so repeat the dict until it is longer then the dict
-                if len(value) < len(self):
-                    value = value * -(-len(self)//len(value))
-                for i,(k,v) in enumerate(OrderedDict(self).items()):
-                    v[key] = value[i]
+
+        elif isinstance(value, list):
+            # check if list is shorter then the dict
+            # if so repeat the dict until it is longer then the dict
+            if len(value) < len(self):
+                value = value * -(-len(self)//len(value))
+            for i, (k, v) in enumerate(OrderedDict(self).items()):
+                v[key] = value[i]
+        elif isinstance(value, dict):
+            # check if the keys in the dict correspond to edge ids.
+            # if so add the value to the EdgeDict
+
+            # Case 1: all keys are related to edge ids
+            if set(value) == set(self):
+                for k, v in OrderedDict(self).items():
+                    v[key] = value[k]
+            # Case 2: all keys are edge ids but there are less keys than edges.
+            elif len(set(value)) < len(set(self)) and \
+                    set(value).issubset(set(self)):
+                for k, v in OrderedDict(self).items():
+                    if k in value:
+                        v[key] = value[k]
+                    else:
+                        v[key] = None
+            # Case 3: all keys are edge ids but there a more keys than edges.
+            elif len(set(value)) > len(set(self)) and \
+                    set(self).issubset(set(value)):
+                for k, v in OrderedDict(self).items():
+                    v[key] = value[k]
+                log.warn('More edge ids are defined as in the network '
+                         'available!')
+            # Case 4: keys are not equal to edge ids
             else:
-                for k,v in OrderedDict(self).items():
+                for k, v in OrderedDict(self).items():
                     v[key] = value
+        else:
+            for k, v in OrderedDict(self).items():
+                v[key] = value
 
     @property
     def last(self):
@@ -1475,7 +1537,7 @@ class EdgeDict(OrderedDict):
             _attributes.update(list(v.attributes.keys()))
         return list(_attributes)
 
-    def index(self,idx):
+    def index(self, idx):
         """Returns the list index of an edge.
 
         Parameters
@@ -1498,6 +1560,7 @@ class EdgeDict(OrderedDict):
 
         """
         return list(OrderedDict(self).keys()).index(idx)
+
 
 class NodeDict(OrderedDict):
     """A container to save the nodes.
@@ -1583,6 +1646,21 @@ class NodeDict(OrderedDict):
     >>> nodes['gender']
     {u:'m', v:'f', w:'m'}
 
+    If the attributes are given as a dictionary with the node ids as keys, each
+    value is assigned to the corresponding node. Nodes where no node ids are
+    given in the dictionary get a None value as entry.
+
+    >>> nodes['school'] = {'u': 'ETH', 'v': 'UZH'}
+    >>> nodes['school']
+    {'u': 'ETH', 'v': 'UZH', 'w': None}
+
+    If the keys used in the dictionary do not correspond to the node ids, the
+    dictionary is added as a node attribute instead.
+
+    >>> nodes['affiliation'] = {'a': 'ETH', 'b': 'UZH'}
+    >>> print(nodes['affiliation'])
+    {'u': {'a': 'ETH', 'b': 'UZH'}, 'v': {'a': 'ETH', 'b': 'UZH'}, 'w': {'a': 'ETH', 'b': 'UZH'}}
+
     Also the :py:class:`NodeDict` can be used as an iterator function.
 
     Iterating through all node objects.
@@ -1607,7 +1685,7 @@ class NodeDict(OrderedDict):
     (32, f)
     (33, m)
 
-    With data enabled also the node id is returned 
+    With data enabled also the node id is returned
 
     >>> for n in nodes('age', data=True)
     >>>     print(n)
@@ -1625,7 +1703,8 @@ class NodeDict(OrderedDict):
     ('w', {'gender': 'm', 'type': 'node', 'age': 33, 'color': 'blue'})
 
     """
-    def __call__(self,*args, data=False, **kwds):
+
+    def __call__(self, *args, data=False, **kwds):
         """Returns an iterator over all nodes.
 
         Parameters
@@ -1654,38 +1733,38 @@ class NodeDict(OrderedDict):
         >>> nodes['w'] = cn.Node('w', age=33, gender='m')
 
         Iterating through all node objects.
-    
+
         >>> for n in nodes()
         >>>     print(n)
         Node u
         Node v
         Node w
-    
+
         Iterate trough specific attributes
-    
+
         >>> for n in nodes('age')
         >>>     print(n)
         21
         32
         33
-    
+
         >>> for n in nodes('age','gender')
         >>>     print(n)
         (21, m)
         (32, f)
         (33, m)
-    
-        With data enabled also the node id is returned 
-    
+
+        With data enabled also the node id is returned
+
         >>> for n in nodes('age', data=True)
         >>>     print(n)
         (u, 21)
         (v, 32)
         (w, 33)
-    
+
         Is no argument given but data enabled, the node id and all their
         associated attributes are returned.
-    
+
         >>> for n in nodes(data=True)
         >>>     print(n)
         ('u', {'gender': 'm', 'age': 21})
@@ -1693,7 +1772,7 @@ class NodeDict(OrderedDict):
         ('w', {'gender': 'm', 'age': 33})
 
         """
-        for key,value in OrderedDict(self).items():
+        for key, value in OrderedDict(self).items():
             if len(args) > 0:
                 _attributes = []
                 keys = [a for a in args if (a in self.attributes())]
@@ -1719,7 +1798,7 @@ class NodeDict(OrderedDict):
             else:
                 yield value
 
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         """Returns an item dependent on the key value.
 
         If the key is associated with a node id, the :py:class:`Node` will be
@@ -1766,13 +1845,13 @@ class NodeDict(OrderedDict):
         if key in OrderedDict(self):
             return OrderedDict(self)[key]
         # if key is a int, return the Node at the index
-        elif isinstance(key,int):
+        elif isinstance(key, int):
             return list(OrderedDict(self).values())[key]
         # check if there is an attribute with the name and return a dict of
         # attribute values for the nodes
         elif key in self.attributes():
             _dict = {}
-            for k,v in OrderedDict(self).items():
+            for k, v in OrderedDict(self).items():
                 if key in v.attributes:
                     _dict[k] = v[key]
                 else:
@@ -1784,7 +1863,7 @@ class NodeDict(OrderedDict):
                       ''.format(key))
             raise CnetError
 
-    def __setitem__(self,key,value):
+    def __setitem__(self, key, value):
         """Set and modify items of the NodeDict values.
 
         If the value is an instance of a :py:class:`Node` class the node is
@@ -1815,22 +1894,63 @@ class NodeDict(OrderedDict):
         >>> nodes['gender']
         {u:'m', v:'f', w:'m'}
 
+        If the attributes given as a dictionary with the node ids as keys, each
+        value is assigned to the corresponding node. Nodes where no node ids are
+        given in the dictionary get a None value as entry.
+
+        >>> nodes['school'] = {'u': 'ETH', 'v': 'UZH'}
+        >>> nodes['school']
+        {'u': 'ETH', 'v': 'UZH', 'w': None}
+
+        If the keys used in the dictionary do not correspond to node ids, the
+        dictionary is added as a node attribute instead.
+
+        >>> nodes['affiliation'] = {'a': 'ETH', 'b': 'UZH'}
+        >>> print(nodes['affiliation'])
+        {'u': {'a': 'ETH', 'b': 'UZH'}, 'v': {'a': 'ETH', 'b': 'UZH'}, 'w': {'a': 'ETH', 'b': 'UZH'}}
+
         """
         # check if value is a Node class.
         # if so, add node to the Ordered dict
-        if isinstance(value,Node):
+        if isinstance(value, Node):
             super().__setitem__(key, value)
-        else:
-            if isinstance(value,list):
-                # check if list is shorter then the dict
-                # if so repeat the dict until it is longer then the dict
-                if len(value) < len(self):
-                    value = value * -(-len(self)//len(value))
-                for i,(k,v) in enumerate(OrderedDict(self).items()):
-                    v[key] = value[i]
+        elif isinstance(value, list):
+            # check if list is shorter then the dict
+            # if so repeat the dict until it is longer then the dict
+            if len(value) < len(self):
+                value = value * -(-len(self)//len(value))
+            for i, (k, v) in enumerate(OrderedDict(self).items()):
+                v[key] = value[i]
+        elif isinstance(value, dict):
+            # check if the keys in the dict correspond to node ids.
+            # if so add the value to the NodeDict
+
+            # Case 1: all keys are related to node ids
+            if set(value) == set(self):
+                for k, v in OrderedDict(self).items():
+                    v[key] = value[k]
+            # Case 2: all keys are node ids but there are less keys than nodes.
+            elif len(set(value)) < len(set(self)) and \
+                    set(value).issubset(set(self)):
+                for k, v in OrderedDict(self).items():
+                    if k in value:
+                        v[key] = value[k]
+                    else:
+                        v[key] = None
+            # Case 3: all keys are node ids but there a more keys than nodes.
+            elif len(set(value)) > len(set(self)) and \
+                    set(self).issubset(set(value)):
+                for k, v in OrderedDict(self).items():
+                    v[key] = value[k]
+                log.warn('More node ids are defined as in the network '
+                         'available!')
+            # Case 4: keys are not equal to node ids
             else:
-                for k,v in OrderedDict(self).items():
+                for k, v in OrderedDict(self).items():
                     v[key] = value
+        else:
+            for k, v in OrderedDict(self).items():
+                v[key] = value
 
     @property
     def last(self):
@@ -1848,7 +1968,7 @@ class NodeDict(OrderedDict):
         return self._directed
 
     @directed.setter
-    def directed(self,directed):
+    def directed(self, directed):
         """Setts the EdgeList to directed or undirected."""
         self._directed = directed
 
@@ -1859,7 +1979,7 @@ class NodeDict(OrderedDict):
             _attributes.update(list(v.attributes.keys()))
         return list(_attributes)
 
-    def index(self,idx):
+    def index(self, idx):
         """Returns the list index of a node.
 
         Parameters
@@ -1882,7 +2002,6 @@ class NodeDict(OrderedDict):
 
         """
         return list(OrderedDict(self).keys()).index(idx)
-
 
 
 class Edge(object):
@@ -1998,7 +2117,8 @@ class Edge(object):
     r_ab
 
     """
-    def __init__(self,id,u,v,**attr):
+
+    def __init__(self, id, u, v, **attr):
         """Initialize the node object.
 
         Parameters
@@ -2041,9 +2161,9 @@ class Edge(object):
         self.attributes.update(attr)
 
         # check type of the nodes and add new nodes
-        if not isinstance(u,self.NodeClass):
+        if not isinstance(u, self.NodeClass):
             self._u = self.NodeClass(u)
-        if not isinstance(v,self.NodeClass):
+        if not isinstance(v, self.NodeClass):
             self._v = self.NodeClass(v)
 
     def _node_class(self):
@@ -2065,7 +2185,7 @@ class Edge(object):
             return self.attributes[key]
         except Exception as error:
             log.error('No attribute with key "{}" is defined for edge'
-                      ' "{}".'.format(key,self.id))
+                      ' "{}".'.format(key, self.id))
             raise
 
     def __setitem__(self, key, item):
@@ -2087,7 +2207,7 @@ class Edge(object):
         """Return the destination node v of the edge"""
         return self._v
 
-    def reverse(self,copy=True):
+    def reverse(self, copy=True):
         """Returns a reversed version of the edge.
 
         Parameters
@@ -2133,7 +2253,7 @@ class Edge(object):
             self._u = v
             self._v = u
 
-    def weight(self,weight='weight'):
+    def weight(self, weight='weight'):
         """Returns the weight of the edge.
 
         Per default the attribute with the key 'weight' is used as
@@ -2186,12 +2306,12 @@ class Edge(object):
             weight = False
         if not weight:
             return 1.0
-        elif isinstance(weight,str) and weight !='weight':
+        elif isinstance(weight, str) and weight != 'weight':
             return self.attributes.get(weight, 1.0)
         else:
             return self.attributes.get('weight', 1.0)
 
-    def update(self,**attr):
+    def update(self, **attr):
         """Update the attributes of the edge.
 
         Parameters
@@ -2276,7 +2396,8 @@ class Node(object):
     >>> w = v.copy()
 
     """
-    def __init__(self,u,**attr):
+
+    def __init__(self, u, **attr):
         """Initialize the node object.
 
         Parameters
@@ -2305,9 +2426,9 @@ class Node(object):
         """Returns a specific attribute of the node."""
         try:
             return self.attributes[key]
-        except Exception as error:# as error:
+        except Exception as error:  # as error:
             log.error('No attribute with key "{}" is defined for node'
-                      ' "{}".'.format(key,self.id))
+                      ' "{}".'.format(key, self.id))
             raise CnetError
 
     def __setitem__(self, key, item):
@@ -2328,7 +2449,7 @@ class Node(object):
         """Return the id of the node."""
         return self._id
 
-    def update(self,**attr):
+    def update(self, **attr):
         """Update the attributes of the node.
 
         Parameters
@@ -2366,9 +2487,9 @@ class Node(object):
 # =============================================================================
 # eof
 #
-# Local Variables: 
+# Local Variables:
 # mode: python
 # mode: linum
 # mode: auto-fill
 # fill-column: 80
-# End:  
+# End:

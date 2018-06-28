@@ -4,7 +4,7 @@
 # File      : diffusion.py -- Diffusion processes
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-06-27
-# Time-stamp: <Mit 2018-06-27 14:17 juergen>
+# Time-stamp: <Don 2018-06-28 14:13 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -46,13 +46,18 @@ class RandomWalkDiffusion(object):
        Acceptable difference between the simulation and the analytically
        solution
 
+    maxiter : integer, optional (default = 1000)
+       The maximum number of iterations used to find a the stationary
+       distribution.
+
     """
 
-    def __init__(self, network, walkers=5, epsilon=0.01):
+    def __init__(self, network, walkers=5, epsilon=0.01, maxiter=1000):
 
         self.network = network
         self.walkers = walkers
         self.epsilon = epsilon
+        self.maxiter = maxiter
 
         self.T = self.network.transition_matrix(weight=None)
         self.pi = None
@@ -87,7 +92,7 @@ class RandomWalkDiffusion(object):
 
         """
         if A is None:
-            A = self.T
+            A = self.T.transpose()
         if not sparse.issparse(A):  # pragma: no cover
             log.error("The matrix A must be a sparse matrix!")
             raise CnetError
@@ -133,6 +138,42 @@ class RandomWalkDiffusion(object):
         p_t = (T**time).transpose().dot(x)
 
         return {self.network.nodes[i].id: v for i, v in enumerate(p_t)}
+
+    def speed(self):
+        """ Computes the speed of the diffusion process.
+
+        Computes the average number of steps requires by a random walk
+        process to fall below a total variation distance below epsilon (TVD
+        computed between the momentary visitation probabilities \pi^t and the
+        stationary distribution \pi = \pi^{\infty}. This time can be used to
+        measure diffusion speed in a given (weighted and directed) network.
+
+        """
+        T = self.T
+        pi = self.stationary_distribution()
+        n = self.network.number_of_nodes()
+
+        avg_speed = []
+        for w in range(self.walkers):
+            _avg_speed = 0
+            x = np.zeros(n)
+            seed = np.random.randint(n)
+            x[seed] = 1
+            while self.TVD(x, pi) > self.epsilon:
+                _avg_speed += 1
+                x = T.transpose().dot(x)  # (T.dot(x.transpose())).transpose()
+                if _avg_speed > self.maxiter:
+                    raise RuntimeError(
+                        'Maximal number of iteration was reached')
+            avg_speed.append(_avg_speed)
+        return np.mean(avg_speed)
+
+    @staticmethod
+    def TVD(p1, p2):
+        """Compute total variation distance between two stochastic column vectors"""
+        assert p1.shape == p2.shape
+        return 0.5 * np.sum(np.absolute(np.subtract(p1, p2)))
+
 
 # =============================================================================
 # eof

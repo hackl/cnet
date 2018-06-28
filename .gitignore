@@ -108,3 +108,5 @@ auto_examples/
 /tests/tikz-network.sty
 /tests/default_network.pdf
 /sandbox.py
+temp/
+tikz-network.sty

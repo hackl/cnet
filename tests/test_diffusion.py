@@ -4,7 +4,7 @@
 # File      : test_diffusion.py -- Test environment for diffusion processes
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-06-27
-# Time-stamp: <Mit 2018-06-27 14:29 juergen>
+# Time-stamp: <Don 2018-06-28 14:14 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -28,7 +28,8 @@ import os
 import sys
 
 from scipy import sparse
-
+import scipy.linalg as spl
+import scipy.sparse.linalg as sla
 
 wk_dir = os.path.dirname(os.path.realpath('__file__'))
 sys.path.insert(0, os.path.abspath(os.path.join(wk_dir, '..')))
@@ -89,7 +90,14 @@ def test_random_walk_diffusion(net):
     assert round(p_2['c'], 5) == round(1/6, 5)
     assert round(p_2['d'], 5) == round(1/6, 5)
 
-# test_random_walk_diffusion(net())
+
+def test_random_walk_diffusion_speed(net):
+    rwd = RandomWalkDiffusion(net)
+    s = rwd.speed()
+    assert 15 < s < 25
+
+
+test_random_walk_diffusion_speed(net())
 
 # =============================================================================
 # eof
