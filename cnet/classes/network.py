@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py
 # Creation  : 11 Apr 2018
-# Time-stamp: <Don 2018-06-28 16:51 juergen>
+# Time-stamp: <Mit 2018-07-04 15:52 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -537,8 +537,8 @@ class Network(object):
         if _edge.id not in self.edges:
             self.edges[_edge.id] = _edge
 
-            self.nodes[_edge.u.id].heads.append((_edge.id, 0))
-            self.nodes[_edge.v.id].tails.append((_edge.id, 0))
+            self.nodes[_edge.u.id].heads.add((_edge.id, 0))
+            self.nodes[_edge.v.id].tails.add((_edge.id, 0))
 
             if not self.directed:
                 self.nodes[_edge.u.id].tails.append((_edge.id, 1))
@@ -2418,9 +2418,9 @@ class Node(object):
         # add attributes to the node
         self.attributes.update(attr)
 
-        # list of edges associated with the node
-        self.heads = []
-        self.tails = []
+        # set of edges associated with the node
+        self.heads = set()
+        self.tails = set()
 
     def __getitem__(self, key):
         """Returns a specific attribute of the node."""

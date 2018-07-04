@@ -4,7 +4,7 @@
 # File      : traffic_assignment.py -- Module for flow based traffic assignment
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-06-25
-# Time-stamp: <Mon 2018-06-25 15:10 juergen>
+# Time-stamp: <Mon 2018-07-02 09:47 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -25,7 +25,9 @@
 from collections import defaultdict
 from copy import deepcopy
 from cnet import logger, Path, Paths
-from cnet.algorithms.shortest_path import shortest_path, _shortest_path
+from cnet.algorithms.shortest_path import (shortest_path, _shortest_path,
+                                           dijkstra)
+
 
 log = logger(__name__)
 
@@ -176,8 +178,9 @@ def msa(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=True):
     # initial all-or-nothing assignment
     for o in origins:
         for d in destinations:
-            path = shortest_path(network, o, d, weight='weight')
-            for e in path.edges:
+            cost, path = dijkstra(network, o, d)
+            edges = [n2e[path[i], path[i+1]][0] for i in range(len(path)-1)]
+            for e in edges:
                 potential_volume[e] += od_flow[o][d]
 
     # algorithm
@@ -186,54 +189,148 @@ def msa(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=True):
     temp_volume = deepcopy(empty)
     n = 1
 
-    # if enable_paths:
-    #     temp_path_list = []
+    if enable_paths:
+        temp_path_list = []
 
     while calculate_limit(volume, temp_volume) > limit:
         n += 1
-        update_volume(network, volume)
+        # update_volume(volume)
+        for e, E in network.edges.items():
+            E.volume = volume[e]
+
         temp_volume = deepcopy(volume)
 
-        # if enable_paths:
-        #     temp_paths = {}
+        if enable_paths:
+            temp_paths = {}
 
         for o in origins:
             for d in destinations:
-                path = shortest_path(network, o, d, weight='weight')
+                cost, path = dijkstra(network, o, d)
+                edges = [n2e[path[i], path[i+1]][0]
+                         for i in range(len(path)-1)]
 
-                # if enable_paths:
-                #     temp_paths[tuple(path)] = self.od_flow[o][d]
-                #     self.od_paths[(o, d)][tuple(path)] = 0
+                if enable_paths:
+                    temp_paths[tuple(path)] = od_flow[o][d]
+                    od_paths[(o, d)][tuple(path)] = 0
 
-                for e in path.edges:
+                for e in edges:
                     potential_volume[e] += od_flow[o][d]
 
         for e in network.edges:
             volume[e] = (1-1/n) * volume[e] + 1/n * potential_volume[e]
         potential_volume = deepcopy(empty)
 
-        # if enable_paths:
-        #     for path, value in temp_paths.items():
-        #         temp_path_list.append([n, path, value * 1/n])
+        if enable_paths:
+            for path, value in temp_paths.items():
+                temp_path_list.append([n, path, value * 1/n])
 
         if n >= max_iter:
             log.warn("Maximum number ({}) of iterations was reached!".format(n))
             break
 
-    # if enable_paths:
-    #     temp_path_list.sort(key=lambda x: x[0], reverse=True)
-    #     for n, path, flow in temp_path_list:
-    #         o = path[0]
-    #         d = path[-1]
-    #         if sum(self.od_paths[(o, d)].values()) <= self.od_flow[o][d]:
-    #             self.od_paths[(o, d)][path] += flow
+    if enable_paths:
+        temp_path_list.sort(key=lambda x: x[0], reverse=True)
+        for n, path, flow in temp_path_list:
+            o = path[0]
+            d = path[-1]
 
-    # update the network
-    for e, vol in volume.items():
-        network.edges[e].volume = vol
-        w = network.edges[e].weight()
+            if sum(od_paths[(o, d)].values()) <= od_flow[o][d]:
+                od_paths[(o, d)][path] += flow
 
-    pass
+        P = Paths()
+        for od, paths in od_paths.items():
+            for path, flow in paths.items():
+                if flow > 0:
+                    p = Path(flow=flow)
+                    _costs = 0
+                    for i in range(len(path)-1):
+                        e = network.edges[(path[i], path[i+1])]
+                        p.add_edge(e)
+                        _costs += e.cost
+                    p['cost'] = _costs
+                    P.add_path(p)
+
+    if enable_paths:
+        return P
+    else:
+        return None
+
+
+# def msa(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=True):
+#     # initialze variables
+#     origins = list(od_flow)
+#     destinations = list(set(n for k, v in od_flow.items() for n in v))
+#     od_paths = defaultdict(dict)
+
+#     # create empty dict with edges as keys
+#     empty = {e: 0 for e in network.edges}
+
+#     # initialize variables
+#     volume = deepcopy(empty)
+#     potential_volume = deepcopy(empty)
+#     n2e = network.nodes_to_edges_map()
+
+#     # initial all-or-nothing assignment
+#     for o in origins:
+#         for d in destinations:
+#             path = shortest_path(network, o, d, weight='weight')
+#             for e in path.edges:
+#                 potential_volume[e] += od_flow[o][d]
+
+#     # algorithm
+#     volume = deepcopy(potential_volume)
+#     potential_volume = deepcopy(empty)
+#     temp_volume = deepcopy(empty)
+#     n = 1
+
+#     # if enable_paths:
+#     #     temp_path_list = []
+
+#     while calculate_limit(volume, temp_volume) > limit:
+#         n += 1
+#         update_volume(network, volume)
+#         temp_volume = deepcopy(volume)
+
+#         # if enable_paths:
+#         #     temp_paths = {}
+
+#         for o in origins:
+#             for d in destinations:
+#                 path = shortest_path(network, o, d, weight='weight')
+
+#                 # if enable_paths:
+#                 #     temp_paths[tuple(path)] = self.od_flow[o][d]
+#                 #     self.od_paths[(o, d)][tuple(path)] = 0
+
+#                 for e in path.edges:
+#                     potential_volume[e] += od_flow[o][d]
+
+#         for e in network.edges:
+#             volume[e] = (1-1/n) * volume[e] + 1/n * potential_volume[e]
+#         potential_volume = deepcopy(empty)
+
+#         # if enable_paths:
+#         #     for path, value in temp_paths.items():
+#         #         temp_path_list.append([n, path, value * 1/n])
+
+#         if n >= max_iter:
+#             log.warn("Maximum number ({}) of iterations was reached!".format(n))
+#             break
+
+#     # if enable_paths:
+#     #     temp_path_list.sort(key=lambda x: x[0], reverse=True)
+#     #     for n, path, flow in temp_path_list:
+#     #         o = path[0]
+#     #         d = path[-1]
+#     #         if sum(self.od_paths[(o, d)].values()) <= self.od_flow[o][d]:
+#     #             self.od_paths[(o, d)][path] += flow
+
+#     # update the network
+#     for e, vol in volume.items():
+#         network.edges[e].volume = vol
+#         w = network.edges[e].weight()
+
+#     pass
 
 
 def update_volume(network, volume):

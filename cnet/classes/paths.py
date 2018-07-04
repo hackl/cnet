@@ -1,13 +1,13 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : paths.py 
+# File      : paths.py
 # Creation  : 29 Mar 2018
-# Time-stamp: <Mon 2018-05-07 14:00 juergen>
+# Time-stamp: <Mit 2018-07-04 15:54 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
-# $Id$ 
+# $Id$
 #
 # Description : Base class for paths
 #
@@ -22,7 +22,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
 from cnet import config, logger
@@ -31,6 +31,7 @@ from cnet.utils.exceptions import CnetError, CnetNotImplemented
 log = logger(__name__)
 
 MAX_NAME_LENGTH = 5
+
 
 class Path(Network):
     """Base class for paths.
@@ -119,7 +120,8 @@ class Path(Network):
     SpatialPath
 
     """
-    def __init__(self,nodes=None, directed=True, separator='-', **attr):
+
+    def __init__(self, nodes=None, directed=True, separator='-', **attr):
         """Initialize a path with direction, name and attributes.
 
         Parameters
@@ -161,7 +163,7 @@ class Path(Network):
         Network.__init__(self, directed=directed, **attr)
 
         # assign nodes to the path
-        if isinstance(nodes,list):
+        if isinstance(nodes, list):
             super().add_nodes_from(nodes)
 
     def _path_class(self):
@@ -171,7 +173,7 @@ class Path(Network):
     def __repr__(self):
         """Return the description of the path (see :meth:`_desc`) with the name
         of the path."""
-        return '<{} object {} at 0x{}x>'.format(self._desc(),self.name, id(self))
+        return '<{} object {} at 0x{}x>'.format(self._desc(), self.name, id(self))
 
     def _desc(self):
         """Return a string *Path()*."""
@@ -201,13 +203,13 @@ class Path(Network):
         max_name_length = MAX_NAME_LENGTH
         if len(self) > max_name_length:
             _name = '-'.join(self.path[0:-2][0:max_name_length]) \
-            + '-...-' + self.path[-1]
+                + '-...-' + self.path[-1]
         else:
             _name = '-'.join(self.path)
 
         return self.attributes.get('name', _name)
 
-    def weight(self,weight='weight'):
+    def weight(self, weight='weight'):
         """Returns the weight of the path.
 
         Per default the attribute with the key 'weight' is used as
@@ -260,7 +262,7 @@ class Path(Network):
             weight = False
         if not weight:
             return 1.0
-        elif isinstance(weight,str) and weight !='weight':
+        elif isinstance(weight, str) and weight != 'weight':
             return self.attributes.get(weight, 1.0)
         else:
             return self.attributes.get('weight', 1.0)
@@ -296,7 +298,7 @@ class Path(Network):
         else:
             return ''.join(summary)
 
-    def add_node(self,n,**attr):
+    def add_node(self, n, **attr):
         """Add a single node n and update node attributes.
 
         Add a single node to the path object. If a second node is added,
@@ -336,8 +338,8 @@ class Path(Network):
 
         """
         # check if n is not a Node object
-        if not isinstance(n,self.NodeClass):
-            _node = self.NodeClass(n,**attr)
+        if not isinstance(n, self.NodeClass):
+            _node = self.NodeClass(n, **attr)
         else:
             _node = n
             _node.update(**attr)
@@ -358,7 +360,7 @@ class Path(Network):
             u = self.path[-1]
             self.nodes[_node.id] = _node
             self.path.append(_node.id)
-            super().add_edge(str(u)+self.separator+str(_node.id),u,_node.id)
+            super().add_edge(str(u)+self.separator+str(_node.id), u, _node.id)
             self.path.edges.append(str(u)+self.separator+str(_node.id))
 
     def add_edge(self, e, u=None, v=None, **attr):
@@ -414,13 +416,13 @@ class Path(Network):
 
         """
         # check if e is not an Edge object
-        if not isinstance(e,self.EdgeClass):
+        if not isinstance(e, self.EdgeClass):
             if u is not None and v is not None:
                 if u in self.nodes:
                     u = self.nodes[u]
                 if v in self.nodes:
                     v = self.nodes[v]
-                _edge = self.EdgeClass(e,u,v,**attr)
+                _edge = self.EdgeClass(e, u, v, **attr)
             else:
                 log.error('No nodes are defined for new edge "{}!"'.format(e))
                 raise CnetError
@@ -444,7 +446,7 @@ class Path(Network):
             self.path.append(_edge.v.id)
             self._add_edge(_edge)
         elif not self.directed and \
-             (self.path[-1] == _edge.u.id or self.path[-1] == _edge.v.id):
+                (self.path[-1] == _edge.u.id or self.path[-1] == _edge.v.id):
             if self.path[-1] == _edge.u.id:
                 self.path.append(_edge.v.id)
                 self._add_edge(_edge)
@@ -455,20 +457,20 @@ class Path(Network):
         else:
             log.error('Edge "{}" with nodes "({},{})", is not connected to the'
                       ' previous edge with nodes "({},{})!"'
-                      ''.format(_edge.id,_edge.u.id,_edge.v.id,self.path[-2],self.path[-1]))
+                      ''.format(_edge.id, _edge.u.id, _edge.v.id, self.path[-2], self.path[-1]))
 
             raise CnetError
 
-    def _add_edge(self,_edge):
+    def _add_edge(self, _edge):
         """Help function to add an edge."""
         self.edges[_edge.id] = _edge
         self.path.edges.append(_edge.id)
-        self.nodes[_edge.u.id].heads.append((_edge.id,0))
-        self.nodes[_edge.v.id].tails.append((_edge.id,0))
+        self.nodes[_edge.u.id].heads.add((_edge.id, 0))
+        self.nodes[_edge.v.id].tails.add((_edge.id, 0))
 
         if not self.directed:
-            self.nodes[_edge.u.id].tails.append((_edge.id,1))
-            self.nodes[_edge.v.id].heads.append((_edge.id,1))
+            self.nodes[_edge.u.id].tails.add((_edge.id, 1))
+            self.nodes[_edge.v.id].heads.add((_edge.id, 1))
 
     def remove_node(self, n):
         """Remove node n and all adjacent edges."""
@@ -486,7 +488,7 @@ class Path(Network):
         """Remove all edges specified in edges."""
         raise CnetNotImplemented
 
-    def has_subpath(self,subpath, mode='nodes'):
+    def has_subpath(self, subpath, mode='nodes'):
         """Return True if the path has a sub path.
 
         Parameters
@@ -518,7 +520,7 @@ class Path(Network):
         True
 
         """
-        if isinstance(subpath,self.PathClass):
+        if isinstance(subpath, self.PathClass):
             _subpath = subpath.path
         else:
             # TODO: check also if nodes and edges are Node or Edge classes.
@@ -527,7 +529,7 @@ class Path(Network):
                     _subpath = self.edges_to_path(subpath)
                 except:
                     return False
-            else: # default mode == 'nodes'
+            else:  # default mode == 'nodes'
                 _subpath = subpath
         # check if all elements of the sub path are in the path
         if set(_subpath).issubset(set(self.path)):
@@ -535,19 +537,19 @@ class Path(Network):
             # consider also elements which appear multiple times in the path
             idx = [i for i, x in enumerate(self.path) if x == _subpath[0]]
 
-            return any(all(self._check_path(i+j,v) for j,v in \
+            return any(all(self._check_path(i+j, v) for j, v in
                            enumerate(_subpath)) for i in idx)
         else:
             return False
 
-    def _check_path(self,index,value):
+    def _check_path(self, index, value):
         """Help function to check of the index exist"""
         try:
             return self.path[index] is value
         except:
             return False
 
-    def edges_to_path(self,edges):
+    def edges_to_path(self, edges):
         """Returns a list of node ids representing the path.
 
         Parameters
@@ -563,22 +565,22 @@ class Path(Network):
         Note
         ----
         An error will be raised if there is no corresponding path.
-     
+
         """
         e2n = self.edge_to_nodes_map()
         try:
             # add first edge
-            _path = [e2n[edges[0]][0],e2n[edges[0]][1]]
+            _path = [e2n[edges[0]][0], e2n[edges[0]][1]]
             # add remaining edges
-            _path += [e2n[edges[e]][1] for e in range(1,len(edges))]
+            _path += [e2n[edges[e]][1] for e in range(1, len(edges))]
             # return path
             return _path
         except Exception as error:
             log.error('The edges "{}" could not be mapped to the path "{}"!'
-                      ''.format('-'.join(edges),self.name))
+                      ''.format('-'.join(edges), self.name))
             raise
-        
-    def subpath(self, subpath,mode='nodes'):
+
+    def subpath(self, subpath, mode='nodes'):
         """Returns a sup path of the path.
 
         Parameters
@@ -613,14 +615,14 @@ class Path(Network):
 
         """
         # check if the sub path is in the path
-        if self.has_subpath(subpath,mode=mode):
+        if self.has_subpath(subpath, mode=mode):
             if mode == 'edges':
                 _subpath = self.edges_to_path(subpath)
-            else: # default mode == 'nodes'
+            else:  # default mode == 'nodes'
                 _subpath = subpath
         else:
             log.error('Path "{}" has not sub path "{}"!'
-                      ''.format(self.name,'-'.join(subpath)))
+                      ''.format(self.name, '-'.join(subpath)))
             raise ValueError
 
         # create a new path opject
@@ -633,12 +635,12 @@ class Path(Network):
 
         # go thought the sub path and add the edges
         for i in range(len(_subpath)-1):
-            _e = self.edges[n2e[_subpath[i],_subpath[i+1]][0]]
+            _e = self.edges[n2e[_subpath[i], _subpath[i+1]][0]]
             subpath.add_edge(_e)
 
         return subpath
 
-    def subpaths(self,min_length = None, max_length=None):
+    def subpaths(self, min_length=None, max_length=None):
         """Returns a paths object with all sub paths.
 
         Parameters
@@ -659,7 +661,7 @@ class Path(Network):
         subpaths : Paths
             Returns a paths object containing all the sub paths fulfilling the
             length criteria.
- 
+
         Examples
         --------
         >>> p = cn.Path(['a','b','c','d','e'])
@@ -696,23 +698,25 @@ class Path(Network):
             max_length = len(self)-1
         if min_length > max_length:
             log.error('The minimum path length {} must be smaller then the '
-                      'maximum path length {}!'.format(min_length,max_length))
+                      'maximum path length {}!'.format(min_length, max_length))
             raise ValueError
-        max_length = min(max_length,len(self)-1)
-        min_length = max(min_length,2)
+        max_length = min(max_length, len(self)-1)
+        min_length = max(min_length, 2)
 
         subpaths = Paths(name='sub paths of '+self.name)
-        for i in range(min_length-1,max_length):
+        for i in range(min_length-1, max_length):
             for j in range(len(self)-i):
                 subpaths.add_path(self.subpath(self.path[j:j+i+1]))
         return subpaths
 
-    def shared_paths(self,other):
+    def shared_paths(self, other):
         """Returns the shared path with an other path object"""
         pass
 
+
 class PathList(list):
     """An extended class of list to save the nodes and edges of the path."""
+
     def __init__(self):
         self.edges = []
         self.nodes = []
@@ -737,7 +741,8 @@ class Paths(object):
         An optional name for the network.
 
     """
-    def __init__(self,**attr):
+
+    def __init__(self, **attr):
         """Initialize the paths object with name and attributes.
 
         Parameters
@@ -770,7 +775,7 @@ class Paths(object):
     def __repr__(self):
         """Return the description of the paths (see :meth:`_desc`) with the id
         of the paths."""
-        return '<{} object {} at 0x{}x>'.format(self._desc(),self.name, id(self))
+        return '<{} object {} at 0x{}x>'.format(self._desc(), self.name, id(self))
 
     def _desc(self):
         """Return a string *Paths()*."""
@@ -780,7 +785,7 @@ class Paths(object):
         """Returns the number of paths"""
         return len(self.paths)
 
-    def __getitem__(self,index):
+    def __getitem__(self, index):
         """Returns the path with the assigned index."""
         return self.paths[index]
 
@@ -788,7 +793,7 @@ class Paths(object):
         """Iterating trough the path objects."""
         return (path for path in self.paths)
 
-    def update(self,**attr):
+    def update(self, **attr):
         """Update the attributes of the paths.
 
         Parameters
@@ -806,7 +811,7 @@ class Paths(object):
         """
         self.attributes.update(attr)
 
-    def add_path(self,p):
+    def add_path(self, p):
         """Add a single path to the path list.
 
         Parameters
@@ -820,11 +825,11 @@ class Paths(object):
         >>> P.add_path(cn.Path(['a','b','c']))
 
         """
-        if isinstance(p,Path):
-        #if p is not None:
+        if isinstance(p, Path):
+            # if p is not None:
             self.paths.append(p)
 
-    def add_paths_from(self,paths):
+    def add_paths_from(self, paths):
         """Add multiple paths from a list.
 
         Parameters
@@ -840,10 +845,10 @@ class Paths(object):
 
         """
         for p in paths:
-            if isinstance(p,Path):
+            if isinstance(p, Path):
                 self.paths.append(p)
 
-    def save(self,filename,format=None,mode='nodes',weight=None):
+    def save(self, filename, format=None, mode='nodes', weight=None):
         """Save the paths to file.
 
         Note
@@ -921,9 +926,8 @@ class Paths(object):
         else:
             log.warn("No 'paths' are defined, hence no file was created.")
 
-
     @classmethod
-    def load(cls,filename,format=None):
+    def load(cls, filename, format=None):
         """Load paths from a file.
 
         Note
@@ -970,19 +974,17 @@ class Paths(object):
         if isinstance(paths, Paths):
             return paths
         else:
-            log.error('The file "{}" does not contain a Network object'.format(filename))
+            log.error(
+                'The file "{}" does not contain a Network object'.format(filename))
             raise AttributeError
 
-
-
-    
 
 # =============================================================================
 # eof
 #
-# Local Variables: 
+# Local Variables:
 # mode: python
 # mode: linum
 # mode: auto-fill
 # fill-column: 80
-# End:  
+# End:
