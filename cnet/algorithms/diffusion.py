@@ -4,7 +4,7 @@
 # File      : diffusion.py -- Diffusion processes
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-06-27
-# Time-stamp: <Don 2018-06-28 14:13 juergen>
+# Time-stamp: <Don 2018-07-05 08:35 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -52,14 +52,14 @@ class RandomWalkDiffusion(object):
 
     """
 
-    def __init__(self, network, walkers=5, epsilon=0.01, maxiter=1000):
+    def __init__(self, network, walkers=5, epsilon=0.01, maxiter=1000, weight=None):
 
         self.network = network
         self.walkers = walkers
         self.epsilon = epsilon
         self.maxiter = maxiter
 
-        self.T = self.network.transition_matrix(weight=None)
+        self.T = self.network.transition_matrix(weight)
         self.pi = None
 
     def stationary_distribution(self, A=None, normalized=True, lanczos_vecs=15, maxiter=1000):
