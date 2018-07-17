@@ -1,15 +1,15 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : __init__.py
-# Creation  : 09 Feb 2018
-# Time-stamp: <Die 2018-07-17 16:02 juergen>
+# File      : __about__.py
+# Creation  : 21 May 2018
+# Time-stamp: <Die 2018-07-17 16:05 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
 # $Id$
 #
-# Description : init file for the package
+# Description : some additional package information
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,24 +25,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
-from .__about__ import(
-    __title__,
-    __version__,
-    __author__,
-    __email__,
-    __copyright__,
-    __license__,
-    __maintainer__,
-    __status__,
-    __credits__
-)
-
-from .utils.config import config
-from .utils.logger import logger
-
-from .classes import *
-from .visualization import *
-from .algorithms import *
+__title__ = 'Complex Networks'
+__version__ = '0.0.1'
+__author__ = u'Juergen Hackl'
+__email__ = 'hackl.j@gmx.at'
+__copyright__ = u'Copyright (c) 2018, {} <{}>'.format(__author__, __email__)
+__license__ = u'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
+__maintainer__ = u'Juergen Hackl'
+__status__ = 'Development Status :: 2 - Pre-Alpha'
+__credits__ = []
 
 # =============================================================================
 # eof
