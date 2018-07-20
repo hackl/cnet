@@ -1,15 +1,12 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : __init__.py
-# Creation  : 09 Feb 2018
+# File      : __init__.py -- init file
+# Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
+# Creation  : 2018-07-20
 # Time-stamp: <Fre 2018-07-20 14:48 juergen>
 #
-# Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
-#               http://www.ibi.ethz.ch
-# $Id$
-#
-# Description : init file for the package
+# Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,25 +22,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
-from .__about__ import(
-    __title__,
-    __version__,
-    __author__,
-    __email__,
-    __copyright__,
-    __license__,
-    __maintainer__,
-    __status__,
-    __credits__
-)
+from .tntp import TNTPConverter
 
-from .utils.config import config
-from .utils.logger import logger
-
-from .classes import *
-from .visualization import *
-from .algorithms import *
-from .converters import *
 
 # =============================================================================
 # eof

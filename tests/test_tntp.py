@@ -1,15 +1,12 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : __init__.py
-# Creation  : 09 Feb 2018
-# Time-stamp: <Fre 2018-07-20 14:48 juergen>
+# File      : test_tntp.py -- Test environment for the tntp converter
+# Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
+# Creation  : 2018-07-20
+# Time-stamp: <Fre 2018-07-20 15:28 juergen>
 #
-# Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
-#               http://www.ibi.ethz.ch
-# $Id$
-#
-# Description : init file for the package
+# Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,27 +21,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
+import pytest
+import os
+import sys
 
-from .__about__ import(
-    __title__,
-    __version__,
-    __author__,
-    __email__,
-    __copyright__,
-    __license__,
-    __maintainer__,
-    __status__,
-    __credits__
-)
+wk_dir = os.path.dirname(os.path.realpath('__file__'))
+sys.path.insert(0, os.path.abspath(os.path.join(wk_dir, '..')))
 
-from .utils.config import config
-from .utils.logger import logger
+import cnet
 
-from .classes import *
-from .visualization import *
-from .algorithms import *
-from .converters import *
 
+def test_flow_to_dict():
+    tntp = cnet.converters.TNTPConverter()
+    tntp.trips_to_dict('trips.tntp', prefix='N', zfill=2)
+
+
+test_flow_to_dict()
 # =============================================================================
 # eof
 #
