@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : __init__.py
 # Creation  : 04 May 2018
-# Time-stamp: <Mit 2018-07-25 08:28 juergen>
+# Time-stamp: <Mit 2018-07-25 16:00 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -29,7 +29,7 @@ from .network import Node, Edge, Network, NodeDict, EdgeDict
 from .paths import Path, Paths
 from .spatial_network import SpatialNode, SpatialEdge, SpatialNetwork, SpatialPath
 from .road_network import RoadNode, RoadEdge, RoadNetwork
-from .higher_order_network import PathNetwork, PathEdge, PathNode
+from .path_network import PathNetwork, PathEdge, PathNode
 
 # =============================================================================
 # eof

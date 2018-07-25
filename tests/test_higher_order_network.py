@@ -4,7 +4,7 @@
 # File      : test_higher_order_network.py -- Test environment for HONs
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-25
-# Time-stamp: <Mit 2018-07-25 14:51 juergen>
+# Time-stamp: <Mit 2018-07-25 17:17 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -29,109 +29,41 @@ import sys
 wk_dir = os.path.dirname(os.path.realpath('__file__'))
 sys.path.insert(0, os.path.abspath(os.path.join(wk_dir, '..')))
 import cnet as cn
-from cnet.classes.higher_order_network import PathNetwork, PathEdge, PathNode
+from cnet.classes.higher_order_network import (
+    HigherOrderNetwork, HigherOrderPathNetwork)
+from cnet.classes.path_network import PathEdge, PathNode, PathNetwork
 
 
-def test_path_network():
-    net = PathNetwork()
+def test_higher_order_network():
 
-    assert isinstance(net, cn.Network)
+    a = HigherOrderNetwork('a')
+    b = HigherOrderNetwork('b', color='blue')
+    N = HigherOrderNetwork('N')
 
-    net = PathNetwork(name='my path network')
+    N.add_edge('ab', a, b)
+    N.nodes['a'].add_node(b)
+    print(N.nodes['a'].nodes['b']['color'])
+    b['color'] = 'red'
+    print(N.nodes['a'].nodes['b']['color'])
+    print('dddddddddd')
+    print(N.id)
+    print(N)
+    print(N.name)
 
-    assert net.name == 'my path network'
+    p1 = cn.Path(['a', 'b', 'c'])
+    p2 = cn.Path(['a', 'b'])
+    ac = HigherOrderPathNetwork('ac', p1)
+    ab = HigherOrderPathNetwork('ab', p2)
 
-
-def test_path_node():
-    p1 = cn.Path(['a', 'b'])
-    p2 = cn.Path(['a', 'b', 'c'])
-    P = cn.Paths([p1, p2])
-
-    u = PathNode('a-b')
-    assert u.id == 'a-b'
-
-    with pytest.raises(Exception):
-        assert PathNode()
-
-    u = PathNode(p1)
-    assert u.id == 'a-b'
-
-    with pytest.raises(Exception):
-        assert PathNode(P)
-
-    P.name = 'p1,p2'
-    u = PathNode(P)
-    assert u.id == 'p1,p2'
-
-    u = PathNode('a-b', path=p1)
-    assert u.id == 'a-b'
+    net = HigherOrderPathNetwork('net', p1)
+    net.add_node(ab)
+    net.add_node(ac)
+    net.add_edge(None, ab, ac)
+    net.nodes['ab'].add_node(ac)
+    net.summary()
 
 
-def test_subpaths():
-    p1 = cn.Path(['a', 'b'])
-    p2 = cn.Path(['a', 'b', 'c'])
-    u = PathNode('u', path=[p1, p2])
-
-    P = u.subpaths()
-    assert len(P) == 2
-
-
-def test_path_edge():
-
-    ab = PathEdge('ab', 'a', 'b')
-
-    assert isinstance(ab, PathEdge)
-    assert isinstance(ab.id, str)
-    assert ab.id == 'ab'
-    assert isinstance(ab.u, PathNode) and ab.u.id == 'a'
-    assert isinstance(ab.v, PathNode) and ab.v.id == 'b'
-    assert isinstance(ab.u.paths, cn.Paths)
-    assert isinstance(ab.v.paths, cn.Paths)
-
-    p1 = cn.Path(['a', 'b'])
-    p2 = cn.Path(['a', 'b', 'c'])
-
-    u = PathNode('u', p1)
-    v = PathNode('v', p2)
-
-    e = PathEdge('u-v', u, v)
-    assert e.u.path.name == 'a-b'
-    assert e.v.path.name == 'a-b-c'
-    assert isinstance(ab.u.paths, cn.Paths)
-    assert isinstance(ab.v.paths, cn.Paths)
-
-    e = PathEdge('p1-p2', p1, p2)
-    assert e.u.id == 'a-b'
-    assert e.v.id == 'a-b-c'
-
-    e = PathEdge(None, u, v)
-    assert e.id == 'u|v'
-
-    e = PathEdge(None, p1, p2)
-    assert e.id == 'a-b|a-b-c'
-
-
-def test_common_paths():
-    p1 = cn.Path(['a', 'b'])
-    p2 = cn.Path(['a', 'b', 'c'])
-    e = PathEdge(None, p1, p2)
-
-    assert len(e.common_paths()) == 0
-
-    e = PathEdge('ab', 'a', 'b', p1=p1, p2=p1)
-    P = e.common_paths()
-    assert len(P) == 1
-    assert P[0].name == 'a-b'
-
-
-def test_common_subpaths():
-    p1 = cn.Path(['a', 'b'])
-    p2 = cn.Path(['a', 'b', 'c'])
-    e = PathEdge(None, p1, p2)
-
-    P = e.common_subpaths()
-    assert len(P) == 1
-    assert P[0].name == 'a-b'
+test_higher_order_network()
 # =============================================================================
 # eof
 #
