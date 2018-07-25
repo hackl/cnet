@@ -4,7 +4,7 @@
 # File      : ex_networks.py -- Example networks
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-06-29
-# Time-stamp: <Fre 2018-06-29 13:26 juergen>
+# Time-stamp: <Die 2018-07-24 08:46 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # =============================================================================
@@ -97,6 +97,67 @@ def scholtes_second_order():
     net.add_edge('d-f-g', 'df', 'fg')
     net.add_edge('d-g-f', 'dg', 'fg')
     net.add_edge('e-f-g', 'ef', 'fg')
+    return net
+
+
+def scholtes_directed():
+    """Example network used in the lecture Complex Networks by Ingo Scholtes.
+
+    Name:		Scholtes directed
+    Type:		RoadNetwork
+    Directed:		False
+    Number of nodes:	7
+    Number of edges:	18
+
+    """
+    net = cnet.RoadNetwork(name='Scholtes', directed=True)
+
+    net.add_node('a', x=0, y=0)
+    net.add_node('b', x=4000, y=3000)
+    net.add_node('c', x=8000, y=0)
+    net.add_node('d', x=4000, y=7000)
+    net.add_node('e', x=8000, y=10000)
+    net.add_node('f', x=4000, y=10000)
+    net.add_node('g', x=0, y=10000)
+
+    net.add_edge('ab', 'a', 'b',
+                 length=5000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('ac', 'a', 'c',
+                 length=8000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('bc', 'b', 'c',
+                 length=5000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('bd', 'b', 'd',
+                 length=4000.0, capacity=2500, free_flow_speed=27.78)
+    net.add_edge('de', 'd', 'e',
+                 length=5000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('df', 'd', 'f',
+                 length=3000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('dg', 'd', 'g',
+                 length=5000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('ef', 'e', 'f',
+                 length=4000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('fg', 'f', 'g',
+                 length=4000.0, capacity=500, free_flow_speed=27.78)
+
+    net.add_edge('ba', 'b', 'a',
+                 length=5000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('ca', 'c', 'a',
+                 length=8000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('cb', 'c', 'b',
+                 length=5000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('db', 'd', 'b',
+                 length=4000.0, capacity=2500, free_flow_speed=27.78)
+    net.add_edge('ed', 'e', 'd',
+                 length=5000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('fd', 'f', 'd',
+                 length=3000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('gd', 'g', 'd',
+                 length=5000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('fe', 'f', 'e',
+                 length=4000.0, capacity=500, free_flow_speed=27.78)
+    net.add_edge('gf', 'g', 'f',
+                 length=4000.0, capacity=500, free_flow_speed=27.78)
+
     return net
 
 

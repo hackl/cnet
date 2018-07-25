@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : paths.py
 # Creation  : 29 Mar 2018
-# Time-stamp: <Mit 2018-07-04 15:54 juergen>
+# Time-stamp: <Mit 2018-07-25 14:29 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -25,8 +25,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
+import pickle
+from copy import deepcopy
 from cnet import config, logger
-from cnet.classes.network import Network
+from cnet.classes.network import Network, Node, Edge
 from cnet.utils.exceptions import CnetError, CnetNotImplemented
 log = logger(__name__)
 
@@ -78,6 +80,12 @@ class Path(Network):
         7 nodes (a,b,c,d,e,f,g) the name of the path is 'a-b-c-d-...-g'. Please,
         note the name of a path is NOT an unique identifier!
 
+    id : string
+        The identifier of the :py:class:`Path` object. Every path should
+        have a unique id. The id is converted to a string value. If no attribute
+        id is defined, the id is created by the nodes in the path. e.g. a path
+        with such as (a,b,c,d,e,f,a) has the id 'a-b-c-d-e-f-g-a'.
+
     Examples
     --------
     Create an empty path with no nodes and no edges.
@@ -126,7 +134,7 @@ class Path(Network):
 
         Parameters
         ----------
-        nodes : list of node ids or Nodes
+        nodes : list of node ids or Nodes, optional (default = None)
             The parameter nodes must be a list with node ids or node
             objects. Every node within the list should have a unique id.
             The id is converted to a string value and is used as a key value for
@@ -183,6 +191,22 @@ class Path(Network):
         """Returns the number of nodes in the path"""
         return len(self.path)
 
+    def __eq__(self, other):
+        """Returns True if two paths are equal.
+
+        Here equality is defined by the number and order of nodes in the path!
+
+        """
+        return self.id == other.id
+
+    def __hash__(self):
+        """Returns the unique hash of the path.
+
+        Here the hash value is defined by the string of nodes in the path!
+
+        """
+        return hash(self.id)
+
     @property
     def name(self):
         """Returns the name of the path.
@@ -202,12 +226,48 @@ class Path(Network):
         """
         max_name_length = MAX_NAME_LENGTH
         if len(self) > max_name_length:
-            _name = '-'.join(self.path[0:-2][0:max_name_length]) \
-                + '-...-' + self.path[-1]
+            _name = self.separator.join(self.path[0:-2][0:max_name_length]) \
+                + self.separator + '...' + self.separator + self.path[-1]
         else:
-            _name = '-'.join(self.path)
+            _name = self.separator.join(self.path)
 
         return self.attributes.get('name', _name)
+
+    @property
+    def full_name(self):
+        '''Returns the full name of the path
+
+        Name of the path. If no name is assigned the network is called after the
+        assigned nodes. e.g. if the path has nodes 'a', 'b' and 'c', the network
+        is named 'a-b-c'.
+
+        Returns
+        -------
+        name : string
+            Returns the name of the path as a string.
+
+        '''
+        _name = self.separator.join(self.path)
+
+        return self.attributes.get('name', _name)
+
+    @property
+    def id(self):
+        """Returns the id of the path.
+
+        Id of the path. If no id is assigned the path is called after the
+        assigned nodes. e.g. if the path has nodes 'a', 'b' and 'c', the id is
+        'a-b-c'.
+
+        Returns
+        -------
+        id : string
+            Returns the id of the path as a string.
+
+        """
+        _id = self.separator.join(self.path)
+
+        return self.attributes.get('id', _id)
 
     def weight(self, weight='weight'):
         """Returns the weight of the path.
@@ -516,7 +576,7 @@ class Path(Network):
 
         Test edges.
 
-        >>> p.has_subpath(['a-b','b-c'])
+        >>> p.has_subpath(['a-b','b-c'], mode='edges')
         True
 
         """
@@ -536,7 +596,6 @@ class Path(Network):
             # check the order of the elements
             # consider also elements which appear multiple times in the path
             idx = [i for i, x in enumerate(self.path) if x == _subpath[0]]
-
             return any(all(self._check_path(i+j, v) for j, v in
                            enumerate(_subpath)) for i in idx)
         else:
@@ -545,7 +604,7 @@ class Path(Network):
     def _check_path(self, index, value):
         """Help function to check of the index exist"""
         try:
-            return self.path[index] is value
+            return self.path[index] == value
         except:
             return False
 
@@ -567,6 +626,10 @@ class Path(Network):
         An error will be raised if there is no corresponding path.
 
         """
+        if isinstance(edges, str):
+            edges = [edges]
+
+        # TODO: Something is wrong here
         e2n = self.edge_to_nodes_map()
         try:
             # add first edge
@@ -640,7 +703,7 @@ class Path(Network):
 
         return subpath
 
-    def subpaths(self, min_length=None, max_length=None):
+    def subpaths(self, min_length=None, max_length=None, include_path=False):
         """Returns a paths object with all sub paths.
 
         Parameters
@@ -655,6 +718,10 @@ class Path(Network):
             parameter has to be greater then the minimum length parameter. If
             the parameter is also greater then the maximum length of the path,
             the maximum path length is used instead.
+
+        include_path : Boole, optional (default = Flase)
+            If this option is enabled also the current path is added as a
+            sub path of it self.
 
         Returns
         -------
@@ -693,7 +760,7 @@ class Path(Network):
 
         """
         if min_length is None:
-            min_length = 2
+            min_length = 1
         if max_length is None:
             max_length = len(self)-1
         if min_length > max_length:
@@ -707,6 +774,12 @@ class Path(Network):
         for i in range(min_length-1, max_length):
             for j in range(len(self)-i):
                 subpaths.add_path(self.subpath(self.path[j:j+i+1]))
+
+        if len(subpaths) == 0 and len(self) == 2:
+            subpaths.add_path(self.copy())
+        elif len(self) <= max_length+1 and include_path:
+            subpaths.add_path(self.copy())
+
         return subpaths
 
     def shared_paths(self, other):
@@ -732,6 +805,9 @@ class Paths(object):
 
     Parameters
     ----------
+    paths : list of :py:class:`Path` objects, optional (default = None)
+        The parameter paths must be a list with :py:class:`Path` objects.
+
     attr : keyword arguments, optional (default= no attributes)
         Attributes to add to the paths as key=value pairs.
 
@@ -742,11 +818,14 @@ class Paths(object):
 
     """
 
-    def __init__(self, **attr):
+    def __init__(self, paths=None, **attr):
         """Initialize the paths object with name and attributes.
 
         Parameters
         ----------
+        paths : list of :py:class:`Path` objects, optional (default = None)
+            The parameter paths must be a list with :py:class:`Path` objects.
+
         attr : keyword arguments, optional (default= no attributes)
             Attributes to add to the paths as key=value pairs.
 
@@ -761,6 +840,10 @@ class Paths(object):
         self.attributes = {}
         # add attributes to the paths
         self.attributes.update(attr)
+
+        # assign path to the path list
+        if isinstance(paths, list):
+            self.add_paths_from(paths)
 
     @property
     def name(self):
@@ -786,8 +869,17 @@ class Paths(object):
         return len(self.paths)
 
     def __getitem__(self, index):
-        """Returns the path with the assigned index."""
-        return self.paths[index]
+        """Returns the path with the assigned index, or the attribute with the
+        assigned keyword."""
+        if isinstance(index, int):
+            return self.paths[index]
+        elif isinstance(index, str):
+            return self.attributes[index]
+        else:
+            log.error('Index is not defined properly. Please use integer to'
+                      'get the path at the index, or a string value to get'
+                      'the attribute of the Paths object')
+            raise CnetError
 
     def __iter__(self):
         """Iterating trough the path objects."""
@@ -848,6 +940,28 @@ class Paths(object):
             if isinstance(p, Path):
                 self.paths.append(p)
 
+    def summary(self):
+        """Returns a summary of the paths.
+
+        The summary contains the name, the used paths class, and the number of paths.
+
+        If logging is enabled (see config), the summary is written to the log
+        file and showed as information on in the terminal. If logging is not
+        enabled, the function will return a string with the information, which
+        can be printed to the console.
+
+        """
+        summary = [
+            'Name:\t\t\t{}\n'.format(self.name),
+            'Type:\t\t\t{}\n'.format(self.__class__.__name__),
+            'Number of paths:\t{}'.format(str(len(self.paths)))
+        ]
+        if config.logging.enabled:
+            for line in summary:
+                log.info(line.rstrip())
+        else:
+            return ''.join(summary)
+
     def save(self, filename, format=None, mode='nodes', weight=None):
         """Save the paths to file.
 
@@ -870,13 +984,14 @@ class Paths(object):
             necessary and will be added automatically if missing.
 
         format : string, optional (default = None)
-            Format as which the network should be saved.
+            Format as which the network should be saved. Currently supported are
+            '.pkl' files which are used by default, and 'ngram' files.
 
-        mode : string, optional (default = 'nodes)
+        mode : string, optional (default = 'nodes')
             Mode how the path should be saved. This option is not used when the
             paths are saved as a pickle file.
 
-        weight : string or None, optional (default=None)
+        weight : string or None, optional (default = None)
            The name of a path attribute that holds the numerical value used
            as a weight. If None or False, no weight will be assigned to the
 
@@ -978,6 +1093,201 @@ class Paths(object):
                 'The file "{}" does not contain a Network object'.format(filename))
             raise AttributeError
 
+    def intersection(self, other):
+        """Returns the paths which are common in both.
+
+        Parameters
+        ----------
+        other : :py:class:`Paths`
+            An Paths object storing paths.
+
+        Returns
+        -------
+        paths : :py:class:`Paths`
+            Returns a :py:class:`Paths` object with all parts common in this and
+            the other object.
+
+        Examples
+        --------
+        Create a list of paths.
+
+        >>> p_1 = Path(['a', 'b'])
+        >>> p_2 = Path(['a', 'b', 'c'])
+        >>> P_1 = Paths([p_1])
+        >>> P_2 = Paths([p_1, p_2])
+
+        Get the interaction between P_1 and P_2.
+
+        >>> P = P_1.interaction(P_2)
+        >>> for p in P:
+        >>>    print(p.name)
+        a-b
+        """
+        paths = Paths(name='interaction between {} and {}'.format(
+            self.name, other.name))
+        paths.add_paths_from(list(set(self.paths).intersection(other.paths)))
+        return paths
+
+    def st_paths(self, source, target, mode='nodes'):
+        """Returns all paths from the source to the target.
+
+        Parameters
+        ----------
+        source : node id, edge id, Node object or Edge object
+            Starting node or edge of the path.
+
+        target : node id or edge id
+            Ending node or edge for the path.
+
+        mode : string, 'nodes' or 'edges', optional (default = 'nodes')
+            The mode defines how the st-path is defined, i.e. as a list of node
+            ids or a list of edge ids.
+
+        Returns
+        -------
+        st_paths : :py:class:`Paths`
+            Returns a :py:class:`Paths` object with all parts starting at the
+            source and ending at the target.
+
+        Examples
+        --------
+        Create a list of paths.
+
+        >>> p_1 = Path(['a', 'b'])
+        >>> p_2 = Path(['a', 'b', 'c'])
+        >>> p_3 = Path(['a', 'c', 'b'])
+        >>> P = Paths()
+        >>> P.add_paths_from([p_1, p_2, p_3])
+
+        Get the paths from node 'a' to 'b'.
+
+        >>> P_ab = P.st_paths('a', 'b')
+        >>> for p in P_ab:
+        >>>     print(p.name)
+        a-b
+        a-c-b
+
+        Get the paths from edge 'a-b' to 'b-c'.
+
+        >>> P_ac = P.st_paths('a-b', 'b-c', mode='edges')
+        >>> for p in P_ac:
+        >>>     print(p.name)
+        a-b-c
+
+        """
+        # check the source
+        if mode == 'nodes':
+            if isinstance(source, Node):
+                _s = source.id
+            else:
+                _s = source
+            if isinstance(target, Node):
+                _t = target.id
+            else:
+                _t = target
+        elif mode == 'edges':
+            if isinstance(source, Edge):
+                _s = source.id
+            else:
+                _s = source
+            if isinstance(target, Edge):
+                _t = target.id
+            else:
+                _t = target
+        else:
+            log.error('The mode "{}" is not supported!'.format(mode))
+            raise NotImplementedError
+
+        # create a new paths object
+        st_paths = Paths(name='st-paths between {} and {}'.format(_s, _t))
+
+        # go through the paths and add correct paths to the list
+        if mode == 'nodes':
+            for p in self.paths:
+                if p.path[0] == _s and p.path[-1] == _t:
+                    st_paths.add_path(p)
+
+        if mode == 'edges':
+            for p in self.paths:
+                try:
+                    _s_node = p.edge_to_nodes_map()[_s][0]
+                    _t_node = p.edge_to_nodes_map()[_t][1]
+                except:
+                    _s_node = None
+                    _t_node = None
+                if p.path[0] == _s_node and p.path[-1] == _t_node:
+                    st_paths.add_path(p)
+
+        # return the st paths
+        return st_paths
+
+    def sort(self, key=None, reverse=False):
+        """Sorts the paths in a specific order.
+
+        Parameters
+        ----------
+        key : string, optional (default = None)
+            Keyword that serves as a key for the sort comparison. Per default
+            the list will be sorted by the length of the paths.
+
+        reverse : Boole, optional (default = False)
+            If true, the sorted list is reversed (or sorted in Descending order)
+
+        Examples
+        --------
+        Create a list of paths.
+
+        >>> p_1 = Path(['a', 'b', 'c'], cost=10)
+        >>> p_2 = Path(['a', 'b'], cost=100)
+        >>> p_3 = Path(['a', 'c', 'b'] cost=50)
+        >>> P = Paths()
+        >>> P.add_paths_from([p_1, p_2, p_3])
+
+        Sort path by length
+
+        >>> P.sort()
+        >>> for p in P:
+        >>>     print(p.name)
+        a-b
+        a-b-c
+        a-c-b
+
+        Sort by key value
+
+        >>> P.sort('cost')
+        >>> for p in P:
+        >>>     print(p.name)
+        a-b-c
+        a-c-b
+        a-b
+
+        Reverse sort by key value
+
+        >>> P.sort('cost', reverse=True)
+        >>> for p in P:
+        >>>     print(p.name)
+        a-b
+        a-c-b
+        a-b-c
+
+        """
+        _list = []
+        if key is None:
+            for path in self.paths:
+                _list.append((len(path), path))
+        elif isinstance(key, str):
+            for path in self.paths:
+                try:
+                    value = path[key]
+                except:
+                    log.error('The key {} is not defined for path {}'
+                              ''.format(key, path.name))
+                    raise
+                _list.append((path[key], path))
+
+        _list.sort(key=lambda x: x[0], reverse=reverse)
+        for i, (value, path) in enumerate(_list):
+            self.paths[i] = path
 
 # =============================================================================
 # eof

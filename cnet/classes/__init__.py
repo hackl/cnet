@@ -1,13 +1,13 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : __init__.py 
+# File      : __init__.py
 # Creation  : 04 May 2018
-# Time-stamp: <Don 2018-05-10 08:21 juergen>
+# Time-stamp: <Mit 2018-07-25 08:28 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
-# $Id$ 
+# $Id$
 #
 # Description : init file
 #
@@ -22,21 +22,21 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
 from .network import Node, Edge, Network, NodeDict, EdgeDict
 from .paths import Path, Paths
 from .spatial_network import SpatialNode, SpatialEdge, SpatialNetwork, SpatialPath
 from .road_network import RoadNode, RoadEdge, RoadNetwork
-
+from .higher_order_network import PathNetwork, PathEdge, PathNode
 
 # =============================================================================
 # eof
 #
-# Local Variables: 
+# Local Variables:
 # mode: python
 # mode: linum
 # mode: auto-fill
 # fill-column: 80
-# End:  
+# End:

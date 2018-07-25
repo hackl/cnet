@@ -4,7 +4,7 @@
 # File      : traffic_assignment.py -- Module for flow based traffic assignment
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-06-25
-# Time-stamp: <Mon 2018-07-02 09:47 juergen>
+# Time-stamp: <Die 2018-07-24 10:35 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -126,6 +126,13 @@ def msa_fast(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=Tr
             log.warn("Maximum number ({}) of iterations was reached!".format(n))
             break
 
+    # update the network
+    for e, vol in volume.items():
+        u = network.nodes[e[0]].id
+        v = network.nodes[e[1]].id
+        network.edges[(u, v)].volume = vol
+        w = network.edges[(u, v)].weight()
+
     # return paths if enabled
     if enable_paths:
         temp_path_list.sort(key=lambda x: x[0], reverse=True)
@@ -141,19 +148,18 @@ def msa_fast(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=Tr
             for path, flow in paths.items():
                 if flow > 0:
                     p = Path(flow=flow)
+                    # cost = 0
+                    # weight = 0
                     for i in range(len(path)-1):
                         u = network.nodes[path[i]].id
                         v = network.nodes[path[i+1]].id
                         e = network.edges[(u, v)]
+                        # cost += e.cost * flow / e.volume
+                        # weight += e.cost
                         p.add_edge(e)
+                    # p['cost'] = cost
+                    # p['weight'] = weight
                     P.add_path(p)
-
-    # update the network
-    for e, vol in volume.items():
-        u = network.nodes[e[0]].id
-        v = network.nodes[e[1]].id
-        network.edges[(u, v)].volume = vol
-        w = network.edges[(u, v)].weight()
 
     if enable_paths:
         return P
@@ -242,12 +248,16 @@ def msa(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=True):
             for path, flow in paths.items():
                 if flow > 0:
                     p = Path(flow=flow)
-                    _costs = 0
+                    _cost = 0
+                    _weight = 0
                     for i in range(len(path)-1):
                         e = network.edges[(path[i], path[i+1])]
                         p.add_edge(e)
-                        _costs += e.cost
-                    p['cost'] = _costs
+                        _weight += e.cost
+                        _cost += e.cost * flow / e.volume
+
+                    p['cost'] = _cost
+                    p['weight'] = _weight
                     P.add_path(p)
 
     if enable_paths:

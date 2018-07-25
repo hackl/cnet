@@ -1,13 +1,13 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : spatialnetwork.py 
+# File      : spatialnetwork.py
 # Creation  : 01 May 2018
-# Time-stamp: <Mon 2018-05-07 15:42 juergen>
+# Time-stamp: <Mit 2018-07-25 12:38 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
-# $Id$ 
+# $Id$
 #
 # Description : Basic class for spatially embedded networks
 #
@@ -22,7 +22,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
 from cnet.classes.network import Node, Edge, Network
@@ -30,8 +30,9 @@ from cnet.classes.paths import Path
 
 from cnet import logger
 from cnet.utils.helpers import haversine
-from cnet.utils.exceptions import CnetError,CnetNotImplemented
+from cnet.utils.exceptions import CnetError, CnetNotImplemented
 log = logger(__name__)
+
 
 class SpatialNetwork(Network):
     """ Base class for spatially embedded networks.
@@ -63,6 +64,7 @@ class SpatialNetwork(Network):
     Network, RoadNetwork
 
     """
+
     def __init__(self, directed=True, **attr):
         """Initialize a network with direction, name and attributes.
 
@@ -96,6 +98,7 @@ class SpatialNetwork(Network):
     def _edge_class(self):
         """Internal function to assign different Edge classes."""
         self.EdgeClass = SpatialEdge
+
 
 class SpatialEdge(Edge):
     """Base class for an edge.
@@ -194,7 +197,8 @@ class SpatialEdge(Edge):
     Edge, RoadEdge
 
     """
-    def __init__(self,id,u,v,**attr):
+
+    def __init__(self, id, u, v, **attr):
         """Initialize the spatial edge object.
 
         Parameters
@@ -260,14 +264,14 @@ class SpatialEdge(Edge):
         # classes for different Edges sub classes
         self._node_class()
 
-        #check the type of node object and if additional coordinates are defined
-        if not isinstance(u,self.NodeClass) and 'p1' in attr:
-            u = self.NodeClass(u,coordinate=attr['p1'])
-        if not isinstance(v,self.NodeClass) and 'p2' in attr:
-            v = self.NodeClass(v,coordinate=attr['p2'])
+        # check the type of node object and if additional coordinates are defined
+        if not isinstance(u, self.NodeClass) and 'p1' in attr:
+            u = self.NodeClass(u, coordinate=attr['p1'])
+        if not isinstance(v, self.NodeClass) and 'p2' in attr:
+            v = self.NodeClass(v, coordinate=attr['p2'])
 
         # initialize the parent edge class
-        Edge.__init__(self,id,u,v,**attr)
+        Edge.__init__(self, id, u, v, **attr)
 
     def _node_class(self):
         """Internal function to assign different Node classes to the edge"""
@@ -298,9 +302,9 @@ class SpatialEdge(Edge):
                 _coordinates.pop(-1)
             return _coordinates
         else:
-            return [self.u.coordinate,self.v.coordinate]
+            return [self.u.coordinate, self.v.coordinate]
 
-    def length(self,coordinates_type='euclidean'):
+    def length(self, coordinates_type='euclidean'):
         """Returns the length of the edge.
 
         Parameters
@@ -348,13 +352,14 @@ class SpatialEdge(Edge):
         elif coordinates_type is 'topological':
             length = 1
         elif coordinates_type is 'euclidean':
-            coordinates = [complex(p[0],p[1]) for p in self.coordinates]
+            coordinates = [complex(p[0], p[1]) for p in self.coordinates]
             for i in range(1, len(coordinates)):
                 length += abs(coordinates[i] - coordinates[i-1])
         elif coordinates_type is 'geographic':
-            coordinates = self.coordinates#[complex(p[0],p[1]) for p in self.coordinates]
+            # [complex(p[0],p[1]) for p in self.coordinates]
+            coordinates = self.coordinates
             for i in range(1, len(coordinates)):
-                length += haversine(coordinates[i-1],coordinates[i])
+                length += haversine(coordinates[i-1], coordinates[i])
         else:
             log.error('The coordinates type "{}" is not defined! Only'
                       '"topological", "euclidean" and "geographic" are valid '
@@ -433,8 +438,10 @@ class SpatialNode(Node):
     Node, RoadNode
 
     """
-    def __init__(self,u,**attr):
+
+    def __init__(self, u, **attr):
         """Initialize the node object.
+
         Parameters
         ----------
         u : node id
@@ -478,18 +485,18 @@ class SpatialNode(Node):
 
         # check if attributes x and y are defined
         if 'x' in self.attributes and 'y' in self.attributes:
-            self.coordinate = (self.attributes['x'],self.attributes['y'])
+            self.coordinate = (self.attributes['x'], self.attributes['y'])
         elif 'x' in self.attributes and not 'y' in self.attributes:
-            self.coordinate = (self.attributes['x'],0)
+            self.coordinate = (self.attributes['x'], 0)
         elif not 'x' in self.attributes and 'y' in self.attributes:
-            self.coordinate = (0,self.attributes['y'])
+            self.coordinate = (0, self.attributes['y'])
         elif 'coordinate' in self.attributes:
             # TODO: add a check if coordinate is a tuple of floats
             None
         else:
             log.warn('No suitable coordinate was found for node "{}"!'
                      ' Coordinate was set to "(0,0)"!'.format(self.id))
-            self.attributes['coordinate'] = (0.0,0.0)
+            self.attributes['coordinate'] = (0.0, 0.0)
 
     @property
     def x(self):
@@ -497,9 +504,9 @@ class SpatialNode(Node):
         return self.attributes['coordinate'][0]
 
     @x.setter
-    def x(self,x):
+    def x(self, x):
         """Change the x coordinate of the node."""
-        self.attributes['coordinate'] = (float(x),self.y)
+        self.attributes['coordinate'] = (float(x), self.y)
 
     @property
     def y(self):
@@ -507,9 +514,9 @@ class SpatialNode(Node):
         return self.attributes['coordinate'][1]
 
     @y.setter
-    def y(self,y):
+    def y(self, y):
         """Change the y coordinate of the node."""
-        self.attributes['coordinate'] = (self.x,float(y))
+        self.attributes['coordinate'] = (self.x, float(y))
 
     @property
     def coordinate(self):
@@ -517,11 +524,12 @@ class SpatialNode(Node):
         return self.attributes['coordinate']
 
     @coordinate.setter
-    def coordinate(self,coordinate):
+    def coordinate(self, coordinate):
         """Change the tuple (x,y) of the node coordinate."""
         self.attributes['coordinate'] = coordinate
 
-class SpatialPath(Path,SpatialNetwork):
+
+class SpatialPath(Path, SpatialNetwork):
     """Base class for spatial embedded paths.
 
     A Path stores consecutive nodes and edges with optional data, or attributes.
@@ -578,7 +586,8 @@ class SpatialPath(Path,SpatialNetwork):
     Path
 
     """
-    def __init__(self,nodes=None, directed=True, separator='-', **attr):
+
+    def __init__(self, nodes=None, directed=True, separator='-', **attr):
         """Initialize a spatial path with direction, name and attributes.
 
         Parameters
@@ -611,16 +620,16 @@ class SpatialPath(Path,SpatialNetwork):
         # initialize the parent class of the network
         SpatialNetwork.__init__(self, directed=directed, **attr)
         # assign nodes to the path
-        if isinstance(nodes,list):
+        if isinstance(nodes, list):
             super().add_nodes_from(nodes)
 
 
 # =============================================================================
 # eof
 #
-# Local Variables: 
+# Local Variables:
 # mode: python
 # mode: linum
 # mode: auto-fill
 # fill-column: 80
-# End:  
+# End:

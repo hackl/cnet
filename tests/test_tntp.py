@@ -4,7 +4,7 @@
 # File      : test_tntp.py -- Test environment for the tntp converter
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-20
-# Time-stamp: <Fre 2018-07-20 15:28 juergen>
+# Time-stamp: <Sam 2018-07-21 14:47 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -31,12 +31,18 @@ sys.path.insert(0, os.path.abspath(os.path.join(wk_dir, '..')))
 import cnet
 
 
-def test_flow_to_dict():
+def test_trips():
     tntp = cnet.converters.TNTPConverter()
-    tntp.trips_to_dict('trips.tntp', prefix='N', zfill=2)
+    od = tntp.trips('trips.tntp', prefix='N', zfill=2)
 
 
-test_flow_to_dict()
+def test_network():
+    tntp = cnet.converters.TNTPConverter()
+    net = tntp.network('net.tntp', prefix=('N', 'E'), zfill=2)
+
+
+test_trips()
+test_network()
 # =============================================================================
 # eof
 #

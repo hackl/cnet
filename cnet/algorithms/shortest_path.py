@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : shortest_path.py
 # Creation  : 25 May 2018
-# Time-stamp: <Mit 2018-07-04 16:03 juergen>
+# Time-stamp: <Son 2018-07-22 11:08 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch

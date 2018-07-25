@@ -1,13 +1,13 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : road_network.py 
+# File      : road_network.py
 # Creation  : 03 May 2018
-# Time-stamp: <Mon 2018-05-07 15:59 juergen>
+# Time-stamp: <Sam 2018-07-21 11:49 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
-# $Id$ 
+# $Id$
 #
 # Description : Basic class for road networks
 #
@@ -22,7 +22,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
 #import numpy as np
@@ -68,6 +68,7 @@ class RoadNetwork(SpatialNetwork):
     Network, SpatialNetwork
 
     """
+
     def __init__(self, directed=True, **attr):
         """Initialize a network with direction, name and attributes.
 
@@ -97,9 +98,11 @@ class RoadNetwork(SpatialNetwork):
     def _node_class(self):
         """Internal function to assign different Node classes."""
         self.NodeClass = RoadNode
+
     def _edge_class(self):
         """Internal function to assign different Edge classes."""
         self.EdgeClass = RoadEdge
+
 
 class RoadEdge(SpatialEdge):
     """Base class for a road section (edge).
@@ -243,7 +246,8 @@ class RoadEdge(SpatialEdge):
     Edge, RoadEdge
 
     """
-    def __init__(self,id,u,v,alpha=ALPHA,beta=BETA,**attr):
+
+    def __init__(self, id, u, v, alpha=ALPHA, beta=BETA, **attr):
         """Initialize the road edge object.
         Parameters
         ----------
@@ -352,7 +356,7 @@ class RoadEdge(SpatialEdge):
         self._node_class()
 
         # initialize the parent edge class
-        SpatialEdge.__init__(self,id,u,v,**attr)
+        SpatialEdge.__init__(self, id, u, v, **attr)
 
         # initialize the parameters
         self._alpha = alpha
@@ -364,13 +368,13 @@ class RoadEdge(SpatialEdge):
         if not 'capacity' in self.attributes:
             log.warn('No "capacity" attribute was found for edge {}!'
                      ' Default capacity value "{}" was used instead!'
-                     ''.format(self.id,CAPACITY))
+                     ''.format(self.id, CAPACITY))
             self.attributes['capacity'] = CAPACITY
 
         if not 'free_flow_speed' in self.attributes:
             log.warn('No "free_flow_speed" attribute was found for edge {}!'
                      ' Default free flow speed value "{}" was used instead!'
-                     ''.format(self.id,FREE_FLOW_SPEED))
+                     ''.format(self.id, FREE_FLOW_SPEED))
             self.attributes['free_flow_speed'] = FREE_FLOW_SPEED
 
     def _node_class(self):
@@ -383,7 +387,7 @@ class RoadEdge(SpatialEdge):
         return self._alpha
 
     @alpha.setter
-    def alpha(self,alpha):
+    def alpha(self, alpha):
         """Change the alpha parameter for the BPR function."""
         self._alpha = alpha
 
@@ -393,7 +397,7 @@ class RoadEdge(SpatialEdge):
         return self._beta
 
     @beta.setter
-    def beta(self,beta):
+    def beta(self, beta):
         """Change the alpha parameter for the BPR function."""
         self._beta = beta
 
@@ -408,7 +412,7 @@ class RoadEdge(SpatialEdge):
         return self.attributes['free_flow_speed']
 
     @free_flow_speed.setter
-    def free_flow_speed(self,free_flow_speed):
+    def free_flow_speed(self, free_flow_speed):
         """Change the free flow speed of the edge."""
         self.attributes['free_flow_speed'] = free_flow_speed
 
@@ -418,7 +422,7 @@ class RoadEdge(SpatialEdge):
         return self.attributes['capacity']
 
     @capacity.setter
-    def capacity(self,capacity):
+    def capacity(self, capacity):
         """Change the capacity of the edge."""
         self.attributes['capacity'] = capacity
 
@@ -428,7 +432,7 @@ class RoadEdge(SpatialEdge):
         return self._cost
 
     @cost.setter
-    def cost(self,cost):
+    def cost(self, cost):
         """Change the cost of using the edge."""
         self._cost = cost
 
@@ -438,11 +442,11 @@ class RoadEdge(SpatialEdge):
         return self._volume
 
     @volume.setter
-    def volume(self,volume):
+    def volume(self, volume):
         """Change the traffic volume of the edge."""
         self._volume = volume
 
-    def weight(self,weight='weight',mode='BPR'):
+    def weight(self, weight='weight', mode='BPR'):
         """Returns the weight of the edge.
 
         Per default the attribute with the key 'weight' is used as
@@ -491,15 +495,15 @@ class RoadEdge(SpatialEdge):
         if weight is None:
             weight = False
         if not weight:
-            self.cost = self.cost_function(self.volume,mode=mode)
+            self.cost = self.cost_function(self.volume, mode=mode)
             return self.cost
-        elif isinstance(weight,str) and weight !='weight':
+        elif isinstance(weight, str) and weight != 'weight':
             return self.attributes.get(weight, 1.0)
         else:
-            self.cost = self.cost_function(self.volume,mode=mode)
+            self.cost = self.cost_function(self.volume, mode=mode)
             return self.cost
 
-    def cost_function(self,volume,mode='BPR'):
+    def cost_function(self, volume, mode='BPR'):
         """Returns the cost of traveling on the road segment.
 
         Parameters
@@ -524,7 +528,7 @@ class RoadEdge(SpatialEdge):
 
         .. math::
 
-            S_e(v_e) = t_e (1 + \\alpha (v_e/C_e)^4)
+            S_e(v_e) = t_e (1 + \\alpha (v_e/C_e)^\\beta)
 
         with
 
@@ -536,11 +540,12 @@ class RoadEdge(SpatialEdge):
         """
         if mode == 'BPR':
             cost = self.free_flow_time * \
-                   (1 + self.alpha * (volume/self.capacity) ** self.beta)
+                (1 + self.alpha * (volume/self.capacity) ** self.beta)
         else:
             log.error('The cost function "{}" is not implemented!'.format(mode))
             raise NotImplementedError
         return cost
+
 
 class RoadNode(SpatialNode):
     """Base class for road intersections.
@@ -614,17 +619,17 @@ class RoadNode(SpatialNode):
     --------
     Node, SpatialNode
     """
-    def __init__(self,u,**attr):
-        SpatialNode.__init__(self, u, **attr)
 
+    def __init__(self, u, **attr):
+        SpatialNode.__init__(self, u, **attr)
 
 
 # =============================================================================
 # eof
 #
-# Local Variables: 
+# Local Variables:
 # mode: python
 # mode: linum
 # mode: auto-fill
 # fill-column: 80
-# End:  
+# End:

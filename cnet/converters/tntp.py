@@ -4,7 +4,7 @@
 # File      : tntp.py -- Convert tntp data to various other formats
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-20
-# Time-stamp: <Fre 2018-07-20 16:19 juergen>
+# Time-stamp: <Sam 2018-07-21 16:06 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -23,6 +23,7 @@
 # =============================================================================
 
 from collections import defaultdict
+import cnet as cn
 from cnet import logger
 
 log = logger(__name__)
@@ -45,7 +46,7 @@ class TNTPConverter(object):
     def __init__(self, filename=None):
         self.filename = filename
 
-    def trips_to_dict(self, filename=None, prefix='', zfill=0):
+    def trips(self, filename=None, prefix='', zfill=0):
         """Converts od trips to a dictionary format.
 
         Parameters
@@ -74,24 +75,11 @@ class TNTPConverter(object):
         trips = defaultdict(dict)
         zones = 0
 
-        # check the input file name
-        if self.filename is None and filename is None:
-            log.warn('No file name was defined,'
-                     'hence, no output was created!')
-            return None
-        elif filename is not None:
-            self.filename = filename
+        # load file content
+        content = self._load_file(filename)
 
-        # load the file if the ending is correct
-        if self.filename.endswith('.tntp'):
-            log.debug('Read tntp file.')
-            with open(filename, 'r') as f:
-                content = f.readlines()
-                # remove '\n' form the file
-                content = [x.strip() for x in content]
-        else:
-            log.warn('The file must be in a ".tntp" format.'
-                     'Please use correct file format. No output was created!')
+        # end function if no file was loaded
+        if content is None:
             return None
 
         destinations = []
@@ -128,12 +116,103 @@ class TNTPConverter(object):
 
         return trips
 
-# =============================================================================
-# eof
-#
-# Local Variables:
-# mode: python
-# mode: linum
-# mode: auto-fill
-# fill-column: 80
-# End:
+    def network(self, filename=None, name='tntp', prefix='', zfill=0):
+        """Generate a cnet network from tntp file.
+
+        Parameters
+        ----------
+        filename : file or string, optional (default = None)
+            File or filename to load. The file must be in a '.tntp' format.
+
+        prefix : string or tuple of string, optional (default = '')
+            Adds a string value in front of the node/edge id.
+
+        zfill : integer, optional (default = 0)
+            Fills the empty space in front of the node/edge ids with zeros. The
+            number indicate the digets filled up, e.g. `zfill = 2` transforms
+           '1' to '01'.
+
+        Returns
+        -------
+        network : :py:class:`RoadNetwork`
+            Returns a road network.
+
+        """
+        # initialize variables
+        network = cn.RoadNetwork(name=name, directed=True)
+
+        # load file content
+        content = self._load_file(filename)
+
+        # end function if no file was loaded
+        if content is None:
+            return None
+        # check prefix
+        if isinstance(prefix, tuple):
+            prefix_n = prefix[0]
+            prefix_e = prefix[1]
+        else:
+            prefix_n = prefix
+            prefix_e = prefix
+
+        edges = False
+
+        for i, line in enumerate(content):
+            if edges:
+                id = prefix_e + str(i-j).zfill(zfill)
+                e = line.split('\t')
+                u = prefix_n + e[0].zfill(zfill)
+                v = prefix_n + e[1].zfill(zfill)
+                c = float(e[2])
+                l = float(e[3])
+                fft = float(e[4])
+                ffs = l/fft
+                a = float(e[5])
+                b = float(e[6])
+                sl = float(e[7])
+                to = float(e[8])
+                ty = float(e[9])
+
+                edge = cn.RoadEdge(id, u, v, p1=(0, 0), p2=(0, 0), capacity=c,
+                                   length=l, free_flow_speed=ffs, alpha=a,
+                                   beta=b, speed_limit=sl, toll=to, type=ty)
+                network.add_edge(edge)
+            # set edges to True after reading the header.
+            if '~' in line:
+                j = i
+                edges = True
+
+        return network
+
+    def _load_file(self, filename):
+        """Function to check and lode the input file."""
+        # check the input file name
+        if self.filename is None and filename is None:
+            log.warn('No file name was defined,'
+                     'hence, no output was created!')
+            return None
+        elif filename is not None:
+            self.filename = filename
+
+        # load the file if the ending is correct
+        if self.filename.endswith('.tntp'):
+            # log.debug('Read tntp file.')
+            with open(filename, 'r') as f:
+                content = f.readlines()
+                # remove ' \t\n\r' form the file
+                content = [x.strip() for x in content]
+                return content
+        else:
+            log.warn('The file must be in a ".tntp" format.'
+                     'Please use correct file format. No output was created!')
+            return None
+
+        # =============================================================================
+        # eof
+        #
+        # Local Variables:
+        # mode: python
+        # mode: linum
+        # mode: auto-fill
+        # fill-column: 80
+        # End:

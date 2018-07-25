@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py
 # Creation  : 11 Apr 2018
-# Time-stamp: <Mit 2018-07-04 15:52 juergen>
+# Time-stamp: <Die 2018-07-24 11:25 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -208,7 +208,10 @@ class Network(object):
     @property
     def name(self):
         """Return the name of the network if defined, else an empty space."""
-        return self.attributes.get('name', '')
+        _name = self.attributes.get('name', '')
+        if _name is None:
+            _name = ''
+        return _name
 
     @name.setter
     def name(self, s):
@@ -541,8 +544,8 @@ class Network(object):
             self.nodes[_edge.v.id].tails.add((_edge.id, 0))
 
             if not self.directed:
-                self.nodes[_edge.u.id].tails.append((_edge.id, 1))
-                self.nodes[_edge.v.id].heads.append((_edge.id, 1))
+                self.nodes[_edge.u.id].tails.add((_edge.id, 1))
+                self.nodes[_edge.v.id].heads.add((_edge.id, 1))
 
         else:
             log.warn('The edge with id: {} is already part of the'
@@ -626,11 +629,16 @@ class Network(object):
 
         if e in self.edges:
             # remove edge from heads and tails counter of the nodes
-            self.edges[e].u.heads.remove((e, 0))
-            self.edges[e].v.tails.remove((e, 0))
+            self.nodes[self.edges[e].u.id].heads.remove((e, 0))
+            self.nodes[self.edges[e].v.id].tails.remove((e, 0))
+            # TODO: figure out why this command is not working properly
+            # self.edges[e].u.heads.remove((e, 0))
+            # self.edges[e].v.tails.remove((e, 0))
             if not self.directed:
-                self.edges[e].u.tails.remove((e, 1))
-                self.edges[e].v.heads.remove((e, 1))
+                # self.edges[e].u.tails.remove((e, 1))
+                # self.edges[e].v.heads.remove((e, 1))
+                self.nodes[self.edges[e].u.id].tails.remove((e, 1))
+                self.nodes[self.edges[e].v.id].heads.remove((e, 1))
             # delete the edge
             del self.edges[e]
 
