@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py
 # Creation  : 11 Apr 2018
-# Time-stamp: <Die 2018-07-24 11:25 juergen>
+# Time-stamp: <Don 2018-07-26 09:14 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch

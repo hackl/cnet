@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : paths.py
 # Creation  : 29 Mar 2018
-# Time-stamp: <Mit 2018-07-25 14:29 juergen>
+# Time-stamp: <Don 2018-07-26 08:57 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -168,7 +168,7 @@ class Path(Network):
         # initializing the separator
         self.separator = separator
         # initializing the parent network class
-        Network.__init__(self, directed=directed, **attr)
+        super().__init__(directed=directed, **attr)
 
         # assign nodes to the path
         if isinstance(nodes, list):
