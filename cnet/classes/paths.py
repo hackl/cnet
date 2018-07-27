@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : paths.py
 # Creation  : 29 Mar 2018
-# Time-stamp: <Don 2018-07-26 08:57 juergen>
+# Time-stamp: <Fre 2018-07-27 10:18 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -642,6 +642,20 @@ class Path(Network):
             log.error('The edges "{}" could not be mapped to the path "{}"!'
                       ''.format('-'.join(edges), self.name))
             raise
+
+    def path_to_edges(self):
+        """Returns a list of edge ids representing the path.
+
+        """
+        n2e = self.nodes_to_edges_map()
+        _edges = []
+        for i in range(len(self)-1):
+            _edge = n2e[(self.path[i], self.path[i+1])]
+            if len(_edge) > 1:
+                log.warning('More than one edge was found between node {} and'
+                            ' {}'.format(self.path[i], self.path[i+1]))
+            _edges.append(self.edges[_edge[0]])
+        return _edges
 
     def subpath(self, subpath, mode='nodes'):
         """Returns a sup path of the path.

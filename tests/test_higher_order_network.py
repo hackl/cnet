@@ -4,7 +4,7 @@
 # File      : test_higher_order_network.py -- Test environment for HONs
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-25
-# Time-stamp: <Don 2018-07-26 09:38 juergen>
+# Time-stamp: <Fre 2018-07-27 14:46 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -97,6 +97,14 @@ def test_path_and_node():
     assert v.path == ['a', 'b', 'c']
     assert len(v) == 3
     assert v['color'] == 'green'
+
+    w = NodeAndPath('w')
+    assert w.id == 'w'
+    assert w.name == ''
+    assert len(w) == 0
+
+    w = NodeAndPath('w', active=True)
+    assert w['active'] == True
 
 
 # test_higher_order_network()

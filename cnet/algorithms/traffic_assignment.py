@@ -4,7 +4,7 @@
 # File      : traffic_assignment.py -- Module for flow based traffic assignment
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-06-25
-# Time-stamp: <Die 2018-07-24 10:35 juergen>
+# Time-stamp: <Fre 2018-07-27 09:28 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -91,12 +91,19 @@ def msa_fast(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=Tr
         temp_path_list = []
 
     while calculate_limit(volume, temp_volume) > limit:
-        n += 1
+        #n += 1
 
         # update adjacency matrix
         for (u, v), w in volume.items():
             adj[u, v] = _fft[(u, v)] * (1 + _a[(u, v)] *
                                         (w/_c[(u, v)]) ** _b[(u, v)])
+        # update the network
+        for e, vol in volume.items():
+            u = network.nodes[e[0]].id
+            v = network.nodes[e[1]].id
+            network.edges[(u, v)].volume = vol
+            w = network.edges[(u, v)].weight()
+
         temp_volume = deepcopy(volume)
 
         if enable_paths:
@@ -105,7 +112,7 @@ def msa_fast(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=Tr
         for o in origins:
             for d in destinations:
                 cost, path = _shortest_path(adj, o, d)
-
+                #print(cost, path)
                 if enable_paths:
                     temp_paths[tuple(path)] = _od_flow[o][d]
                     od_paths[(o, d)][tuple(path)] = 0
@@ -125,13 +132,7 @@ def msa_fast(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=Tr
         if n >= max_iter:
             log.warn("Maximum number ({}) of iterations was reached!".format(n))
             break
-
-    # update the network
-    for e, vol in volume.items():
-        u = network.nodes[e[0]].id
-        v = network.nodes[e[1]].id
-        network.edges[(u, v)].volume = vol
-        w = network.edges[(u, v)].weight()
+        n += 1
 
     # return paths if enabled
     if enable_paths:
@@ -148,17 +149,20 @@ def msa_fast(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=Tr
             for path, flow in paths.items():
                 if flow > 0:
                     p = Path(flow=flow)
-                    # cost = 0
-                    # weight = 0
+                    _cost = 0
+                    _weight = 0
+                    _fft = 0
                     for i in range(len(path)-1):
                         u = network.nodes[path[i]].id
                         v = network.nodes[path[i+1]].id
                         e = network.edges[(u, v)]
-                        # cost += e.cost * flow / e.volume
-                        # weight += e.cost
+                        _cost += e.cost * flow / e.volume
+                        _weight += e.cost
+                        _fft += e.free_flow_time
                         p.add_edge(e)
-                    # p['cost'] = cost
-                    # p['weight'] = weight
+                    p['cost'] = _cost
+                    p['weight'] = _weight
+                    p['fft'] = _fft
                     P.add_path(p)
 
     if enable_paths:
@@ -199,7 +203,7 @@ def msa(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=True):
         temp_path_list = []
 
     while calculate_limit(volume, temp_volume) > limit:
-        n += 1
+        #n += 1
         # update_volume(volume)
         for e, E in network.edges.items():
             E.volume = volume[e]
@@ -212,6 +216,7 @@ def msa(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=True):
         for o in origins:
             for d in destinations:
                 cost, path = dijkstra(network, o, d)
+                #print(cost, path)
                 edges = [n2e[path[i], path[i+1]][0]
                          for i in range(len(path)-1)]
 
@@ -233,6 +238,7 @@ def msa(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=True):
         if n >= max_iter:
             log.warn("Maximum number ({}) of iterations was reached!".format(n))
             break
+        n += 1
 
     if enable_paths:
         temp_path_list.sort(key=lambda x: x[0], reverse=True)
@@ -250,14 +256,16 @@ def msa(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=True):
                     p = Path(flow=flow)
                     _cost = 0
                     _weight = 0
+                    _fft = 0
                     for i in range(len(path)-1):
                         e = network.edges[(path[i], path[i+1])]
                         p.add_edge(e)
                         _weight += e.cost
                         _cost += e.cost * flow / e.volume
-
+                        _fft += e.free_flow_time
                     p['cost'] = _cost
                     p['weight'] = _weight
+                    p['fft'] = _fft
                     P.add_path(p)
 
     if enable_paths:

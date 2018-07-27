@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py
 # Creation  : 11 Apr 2018
-# Time-stamp: <Don 2018-07-26 09:14 juergen>
+# Time-stamp: <Fre 2018-07-27 13:49 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -420,7 +420,7 @@ class Network(object):
         """
         if n in self.nodes:
             # get list of adjacent edges
-            _edges = self.node_to_edges_map()[n]
+            _edges = set(self.node_to_edges_map()[n])
             # remove edges
             for e in _edges:
                 del self.edges[e]

@@ -4,7 +4,7 @@
 # File      : higher_order_network.py • cnet -- Basic classes for HONs
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-25
-# Time-stamp: <Don 2018-07-26 10:21 juergen>
+# Time-stamp: <Fre 2018-07-27 14:43 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -183,6 +183,8 @@ class NodeAndPath(Node, Path):
         elif isinstance(u, Path):
             _u = u.id
             _path = u
+        elif isinstance(u, str) and path is None:
+            pass
         else:
             log.error('Inputs are not defined correctly! '
                       'Please, check the types of inputs!')
