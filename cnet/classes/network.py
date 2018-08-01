@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py
 # Creation  : 11 Apr 2018
-# Time-stamp: <Fre 2018-07-27 13:49 juergen>
+# Time-stamp: <Die 2018-07-31 15:41 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -696,6 +696,8 @@ class Network(object):
                 return sum([e in self.edges for e in _edges]) > 0
             else:
                 return _edges[0] in self.edges
+        elif isinstance(e, Edge):
+            return e.id in self.edges
         else:
             return e in self.edges
 
@@ -774,21 +776,12 @@ class Network(object):
         col = []
         data = []
 
-        if transposed:
-            for e, (s, t) in self.edges(nodes=True):
+        for e, (s, t) in self.edges(nodes=True):
+            row.append(self.nodes.index(s))
+            col.append(self.nodes.index(t))
+            if not self.directed:
                 row.append(self.nodes.index(t))
                 col.append(self.nodes.index(s))
-                if not self.directed:
-                    row.append(self.nodes.index(s))
-                    col.append(self.nodes.index(t))
-
-        else:
-            for e, (s, t) in self.edges(nodes=True):
-                row.append(self.nodes.index(s))
-                col.append(self.nodes.index(t))
-                if not self.directed:
-                    row.append(self.nodes.index(t))
-                    col.append(self.nodes.index(s))
 
         # create array with non-zero entries
         if self.directed:
@@ -806,7 +799,16 @@ class Network(object):
                     data.append(w)
 
         shape = (self.number_of_nodes(), self.number_of_nodes())
-        return sparse.coo_matrix((data, (row, col)), shape=shape).tocsr()
+        A = sparse.coo_matrix((data, (row, col)), shape=shape).tocsr()
+
+        # if not directed fix diagonal entries
+        if not self.directed:
+            for i in np.argwhere(A.diagonal() > 0):
+                A[i, i] = A[i, i]/2
+
+        if transposed:
+            return A.transpose()
+        return A
 
     def degree(self, nodes=None, weight=None, mode='out'):
         """Returns the node degrees.
@@ -923,7 +925,9 @@ class Network(object):
 
         """
         A = self.adjacency_matrix(weight=weight)
-        D = sparse.diags(1/A.sum(axis=1).A1)
+        # Ignore division by zero warning
+        with np.errstate(divide='ignore'):
+            D = sparse.diags(1/A.sum(axis=1).A1)
         return D*A
 
     def laplacian_matrix(self, weight=None):

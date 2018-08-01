@@ -4,7 +4,7 @@
 # File      : tntp.py -- Convert tntp data to various other formats
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-20
-# Time-stamp: <Sam 2018-07-21 16:06 juergen>
+# Time-stamp: <Die 2018-07-31 10:26 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -81,6 +81,10 @@ class TNTPConverter(object):
         # end function if no file was loaded
         if content is None:
             return None
+
+        # append an empty line at the end of the content to guarantee that also
+        # the last origin-destination  will be considered
+        content.append('')
 
         destinations = []
         # iterate through the content and get origin nodes
