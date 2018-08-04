@@ -4,7 +4,7 @@
 # File      : higher_order_network.py • cnet -- Basic classes for HONs
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-25
-# Time-stamp: <Fre 2018-07-27 14:43 juergen>
+# Time-stamp: <Fre 2018-08-03 08:20 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -217,7 +217,7 @@ class NodeAndPath(Node, Path):
         """
         return hash(self.id)
 
-    def inherit_from_path(self, path, copy=True):
+    def inherit_from_path(self, path, copy=False):
         """Inherit attributes and properties from an other path object
         Parameters
         ----------

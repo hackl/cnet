@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : paths.py
 # Creation  : 29 Mar 2018
-# Time-stamp: <Fre 2018-07-27 10:18 juergen>
+# Time-stamp: <Fre 2018-08-03 08:35 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -643,7 +643,7 @@ class Path(Network):
                       ''.format('-'.join(edges), self.name))
             raise
 
-    def path_to_edges(self):
+    def path_to_edges(self, id=True):
         """Returns a list of edge ids representing the path.
 
         """
@@ -654,7 +654,10 @@ class Path(Network):
             if len(_edge) > 1:
                 log.warning('More than one edge was found between node {} and'
                             ' {}'.format(self.path[i], self.path[i+1]))
-            _edges.append(self.edges[_edge[0]])
+            if not id:
+                _edges.append(self.edges[_edge[0]])
+            else:
+                _edges.append(self.edges[_edge[0]].id)
         return _edges
 
     def subpath(self, subpath, mode='nodes'):

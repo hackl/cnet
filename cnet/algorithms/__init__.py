@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : __init__.py
 # Creation  : 25 May 2018
-# Time-stamp: <Sam 2018-07-28 13:51 juergen>
+# Time-stamp: <Fre 2018-08-03 07:44 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -25,7 +25,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
-from .shortest_path import shortest_path, k_shortest_paths, ksp
+from .shortest_path import shortest_path, k_shortest_paths, ksp, dijkstra
 from .traffic_assignment import msa, msa_fast
 from .markov import estimate_transition_matrix, cost_matrix
 from .diffusion import RandomWalkDiffusion

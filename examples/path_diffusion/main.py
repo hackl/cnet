@@ -4,7 +4,7 @@
 # File      : main.py -- Main file for the example
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-08-01
-# Time-stamp: <Mit 2018-08-01 13:36 juergen>
+# Time-stamp: <Fre 2018-08-03 17:32 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # =============================================================================
@@ -18,9 +18,12 @@ from joblib import Parallel, delayed
 # from setup import Setup
 from scenario import Scenario
 from path_diffusion_network import PathDiffusionNetwork_cnet
-
+from visualization import Plotter
 wk_dir = os.path.dirname(os.path.realpath('__file__'))
 sys.path.insert(0, os.path.abspath(os.path.join(wk_dir, '../..')))
+
+np.set_printoptions(suppress=True)
+np.set_printoptions(linewidth=200)
 
 
 def generate_scenarios():
@@ -28,7 +31,7 @@ def generate_scenarios():
     # list of scenarios (e.g. removed edges from the original network)
     scenarios = [None, 'E01']
 
-    scenarios.extend(['N'+str(i+1).zfill(2) for i in range(1, 76)])
+    scenarios.extend(['E'+str(i+1).zfill(2) for i in range(1, 76)])
 
     # run analysis in parallel using all cpus
     Parallel(n_jobs=-1)(delayed(_scenario)(s) for s in scenarios)
@@ -36,7 +39,7 @@ def generate_scenarios():
 
 def _scenario(e):
     """Function to generate a scenario."""
-    Scenario(e, max_iter=100)
+    Scenario(e, max_iter=10000)
 
 
 def print_probabilities(p):
@@ -59,18 +62,24 @@ def main():
     # node to remove
     node_to_remove = 'E01'
     # edges considered with length or above
-    len_e = 3
+    len_e = 5
 
     # Scenarios
     # =========
     # Base scenario
-    S0 = Scenario()
+    S0 = Scenario(max_iter=5000)
     S0.paths.sort('fft')
     # Damaged scenario
-    S1 = Scenario(node_to_remove)
+    S1 = Scenario(node_to_remove, max_iter=5000)
     S1.paths.sort('fft')
     # Path diffusion model
     # ====================
+
+    # Initial
+    INI = PathDiffusionNetwork_cnet(S0.network, S0.paths, n_edges=len_e)
+    INI.assign_probabilities()
+    INI.summary()
+    INI.save('./temp/INI.pkl')
 
     # Estimates
     start_time = time.time()
@@ -94,20 +103,26 @@ def main():
     print('Run diffusion: ', elapsed_time)
 
     EST.summary()
+    EST.save('./temp/EST.pkl')
     print('---')
 
     # Observations
     OBS = PathDiffusionNetwork_cnet(S1.network, S1.paths, n_edges=len_e)
     OBS.assign_probabilities()
     OBS.summary()
-
-    V_est = EST.volume(original=True)
+    OBS.save('./temp/OBS.pkl')
+    # # V_est = EST.volume(original=True)
+    V_est = EST.volume()
     V_obs = OBS.volume(original=True)
 
+    # print(V_est)
+    # print(V_obs)
     error = np.sum((V_obs-V_est)**2)
     abs_error = V_obs-V_est
-    rel_error = np.abs(V_obs-V_est) / V_obs
+    rel_error = np.nan_to_num(np.abs(V_obs-V_est) / V_obs)
 
+    print(abs_error)
+    print(rel_error)
     # for i in range(len(V_est)):
     #     print(V_est[i], V_obs[i], abs_error[i], rel_error[i])
 
@@ -125,6 +140,30 @@ def main():
     print(np.std(abs_error))
 
     print('=' * 80)
+
+
+def test():
+    """Main function to run the example code."""
+    print('=' * 80)
+    # node to remove
+    node_to_remove = 'E01'
+    # edges considered with length or above
+    len_e = 20
+
+    # Scenarios
+    # =========
+    # Base scenario
+    S0 = Scenario()
+    S0.paths.sort('fft')
+    # Damaged scenario
+    S1 = Scenario(node_to_remove)
+    S1.paths.sort('fft')
+    # Path diffusion model
+    # ====================
+
+    A0 = S0.od_path_matrix()
+    A1 = S1.od_path_matrix()
+    print(A1-A0)
 
 
 def _estimate(EST, V_obs, p):
@@ -192,7 +231,7 @@ def estimate(node_to_remove='E01', number_of_simulations=1000, len_e=3):
     p = np.array(sim_results[0][1:6])
     V_est = np.array(sim_results[0][6:])
 
-#    error = np.sum((V_obs-V_est)**2)
+    # error = np.sum((V_obs-V_est)**2)
     abs_error = V_obs-V_est
     rel_error = np.abs(V_obs-V_est) / V_obs
 
@@ -211,10 +250,34 @@ def estimate(node_to_remove='E01', number_of_simulations=1000, len_e=3):
     pass
 
 
+def visualize():
+    print('=' * 80)
+    INI = PathDiffusionNetwork_cnet.load('./temp/INI.pkl')
+    EST = PathDiffusionNetwork_cnet.load('./temp/EST.pkl')
+    OBS = PathDiffusionNetwork_cnet.load('./temp/OBS.pkl')
+    plt = Plotter()
+
+    # # Plot od paths
+    # for n in EST.nodes():
+    #     print(n.id)
+    #     plt.plot_paths([INI, EST, OBS], n.id, n.id+'.pdf')
+    # plt.plot_paths([INI, EST, OBS], 'N01=N02', 'N01=N02.pdf')
+
+    # Plot od Matrix
+    plt.plot_matrix(INI, 'INI_od.pdf')
+    plt.plot_matrix(EST, 'EST_od.pdf')
+    plt.plot_matrix(OBS, 'OBS_od.pdf')
+
+    print('=' * 80)
+
+
 if __name__ == '__main__':
     generate_scenarios()
     # main()
+    # test()
     # estimate()
+    # visualize()
+    pass
 
 # =============================================================================
 # eof
