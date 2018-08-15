@@ -1,10 +1,10 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 # =============================================================================
-# File      : __init__.py -- init file
+# File      : test_matsim.py -- Test environment for the matsim converter
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
-# Creation  : 2018-07-20
-# Time-stamp: <Mit 2018-08-15 14:28 juergen>
+# Creation  : 2018-08-15
+# Time-stamp: <Mit 2018-08-15 16:57 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -21,10 +21,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
+import pytest
+import os
+import sys
 
-from .tntp import TNTPConverter
-from .matsim import MATSimConverter
+wk_dir = os.path.dirname(os.path.realpath('__file__'))
+sys.path.insert(0, os.path.abspath(os.path.join(wk_dir, '..')))
 
+import cnet
+
+
+def test_network():
+    print('-' * 30)
+    msc = cnet.MATSimConverter()
+    #network = msc.network('test_network.xml.gz')
+    #network = msc.network('test_network.xml', prefix=('N', 'E'), zfill=3)
+    network = msc.network('network.xml.gz')
+    network.summary()
+
+
+test_network()
 # =============================================================================
 # eof
 #

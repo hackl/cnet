@@ -4,7 +4,7 @@
 # File      : tntp.py -- Convert tntp data to various other formats
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-20
-# Time-stamp: <Die 2018-07-31 10:26 juergen>
+# Time-stamp: <Mit 2018-08-15 17:00 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -128,6 +128,9 @@ class TNTPConverter(object):
         filename : file or string, optional (default = None)
             File or filename to load. The file must be in a '.tntp' format.
 
+        name : string, optional (default = 'tntp')
+            Name of the :py:class:`RoadNetwork`
+
         prefix : string or tuple of string, optional (default = '')
             Adds a string value in front of the node/edge id.
 
@@ -211,12 +214,12 @@ class TNTPConverter(object):
                      'Please use correct file format. No output was created!')
             return None
 
-        # =============================================================================
-        # eof
-        #
-        # Local Variables:
-        # mode: python
-        # mode: linum
-        # mode: auto-fill
-        # fill-column: 80
-        # End:
+# =============================================================================
+# eof
+#
+# Local Variables:
+# mode: python
+# mode: linum
+# mode: auto-fill
+# fill-column: 80
+# End:

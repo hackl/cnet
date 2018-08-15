@@ -4,7 +4,7 @@
 # File      : traffic_assignment.py -- Module for flow based traffic assignment
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-06-25
-# Time-stamp: <Fre 2018-07-27 09:28 juergen>
+# Time-stamp: <Don 2018-08-09 13:22 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -111,14 +111,15 @@ def msa_fast(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=Tr
 
         for o in origins:
             for d in destinations:
-                cost, path = _shortest_path(adj, o, d)
-                #print(cost, path)
-                if enable_paths:
-                    temp_paths[tuple(path)] = _od_flow[o][d]
-                    od_paths[(o, d)][tuple(path)] = 0
+                if o != d:
+                    cost, path = _shortest_path(adj, o, d)
+                    #print(cost, path)
+                    if enable_paths:
+                        temp_paths[tuple(path)] = _od_flow[o][d]
+                        od_paths[(o, d)][tuple(path)] = 0
 
-                for i in range(len(path)-1):
-                    potential_volume[(path[i], path[i+1])] += _od_flow[o][d]
+                    for i in range(len(path)-1):
+                        potential_volume[(path[i], path[i+1])] += _od_flow[o][d]
 
         for u, v in _edges:
             volume[(u, v)] = (1-1/n) * volume[(u, v)] + \
