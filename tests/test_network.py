@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : test_network.py
 # Creation  : 29 Mar 2018
-# Time-stamp: <Don 2018-06-28 16:52 juergen>
+# Time-stamp: <Mit 2018-08-15 16:08 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch

@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : network.py
 # Creation  : 11 Apr 2018
-# Time-stamp: <Fre 2018-08-03 10:02 juergen>
+# Time-stamp: <Mit 2018-08-15 16:33 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -1306,7 +1306,7 @@ class EdgeDict(OrderedDict):
         bc ('b', 'c') {'capacity': 200, 'length': 15, 'speed': 30}
 
         """
-        for key, value in OrderedDict(self).items():
+        for key, value in self.items():
             _yield = []
             # check if data enabled
             if data or nodes:
@@ -1400,12 +1400,12 @@ class EdgeDict(OrderedDict):
 
         """
         # check if key is an edge id and return the Edge object
-        if key in OrderedDict(self):
-            return OrderedDict(self)[key]
+        if key in self.keys():
+            return super().__getitem__(key)
         # if key is a tuple, check if there are edges with these node ids
         elif isinstance(key, tuple):
             _edges = []
-            for e in OrderedDict(self).values():
+            for e in self.values():
                 if key == (e.u.id, e.v.id):
                     _edges.append(e)
                 # return also edge if Network is undirected and node tuple has
@@ -1425,12 +1425,12 @@ class EdgeDict(OrderedDict):
                 raise CnetError
         # if key is a int, return the Edge at the index
         elif isinstance(key, int):
-            return list(OrderedDict(self).values())[key]
+            return list(self.values())[key]
         # check if there is an attribute with the name and return a dict of
         # attribute values for the edges
         elif key in self.attributes():
             _dict = {}
-            for k, v in OrderedDict(self).items():
+            for k, v in self.items():
                 if key in v.attributes:
                     _dict[k] = v[key]
                 else:
@@ -1499,7 +1499,7 @@ class EdgeDict(OrderedDict):
             # if so repeat the dict until it is longer then the dict
             if len(value) < len(self):
                 value = value * -(-len(self)//len(value))
-            for i, (k, v) in enumerate(OrderedDict(self).items()):
+            for i, (k, v) in enumerate(self.items()):
                 v[key] = value[i]
         elif isinstance(value, dict):
             # check if the keys in the dict correspond to edge ids.
@@ -1507,12 +1507,12 @@ class EdgeDict(OrderedDict):
 
             # Case 1: all keys are related to edge ids
             if set(value) == set(self):
-                for k, v in OrderedDict(self).items():
+                for k, v in self.items():
                     v[key] = value[k]
             # Case 2: all keys are edge ids but there are less keys than edges.
             elif len(set(value)) < len(set(self)) and \
                     set(value).issubset(set(self)):
-                for k, v in OrderedDict(self).items():
+                for k, v in self.items():
                     if k in value:
                         v[key] = value[k]
                     else:
@@ -1520,32 +1520,32 @@ class EdgeDict(OrderedDict):
             # Case 3: all keys are edge ids but there a more keys than edges.
             elif len(set(value)) > len(set(self)) and \
                     set(self).issubset(set(value)):
-                for k, v in OrderedDict(self).items():
+                for k, v in self.items():
                     v[key] = value[k]
                 log.warn('More edge ids are defined as in the network '
                          'available!')
             # Case 4: keys are not equal to edge ids
             else:
-                for k, v in OrderedDict(self).items():
+                for k, v in self.items():
                     v[key] = value
         else:
-            for k, v in OrderedDict(self).items():
+            for k, v in self.items():
                 v[key] = value
 
     @property
     def last(self):
         """Returns the last edge added to the network"""
-        return next(reversed(OrderedDict(self)))
+        return next(reversed(self))
 
     @property
     def first(self):
         """Returns the first edge added to the network"""
-        return next(iter(OrderedDict(self)))
+        return next(iter(self))
 
     def attributes(self):
         """Returns the list of all the edge attributes in the network."""
         _attributes = set()
-        for v in OrderedDict(self).values():
+        for v in self.values():
             _attributes.update(list(v.attributes.keys()))
         return list(_attributes)
 
@@ -1571,7 +1571,7 @@ class EdgeDict(OrderedDict):
         0
 
         """
-        return list(OrderedDict(self).keys()).index(idx)
+        return list(self.keys()).index(idx)
 
 
 class NodeDict(OrderedDict):
@@ -1784,7 +1784,7 @@ class NodeDict(OrderedDict):
         ('w', {'gender': 'm', 'age': 33})
 
         """
-        for key, value in OrderedDict(self).items():
+        for key, value in self.items():
             if len(args) > 0:
                 _attributes = []
                 keys = [a for a in args if (a in self.attributes())]
@@ -1854,16 +1854,16 @@ class NodeDict(OrderedDict):
 
         """
         # check if key is a node id and return the node object
-        if key in OrderedDict(self):
-            return OrderedDict(self)[key]
+        if key in self.keys():
+            return super().__getitem__(key)
         # if key is a int, return the Node at the index
         elif isinstance(key, int):
-            return list(OrderedDict(self).values())[key]
+            return list(self.values())[key]
         # check if there is an attribute with the name and return a dict of
         # attribute values for the nodes
         elif key in self.attributes():
             _dict = {}
-            for k, v in OrderedDict(self).items():
+            for k, v in self.items():
                 if key in v.attributes:
                     _dict[k] = v[key]
                 else:
@@ -1931,7 +1931,7 @@ class NodeDict(OrderedDict):
             # if so repeat the dict until it is longer then the dict
             if len(value) < len(self):
                 value = value * -(-len(self)//len(value))
-            for i, (k, v) in enumerate(OrderedDict(self).items()):
+            for i, (k, v) in enumerate(self.items()):
                 v[key] = value[i]
         elif isinstance(value, dict):
             # check if the keys in the dict correspond to node ids.
@@ -1939,12 +1939,12 @@ class NodeDict(OrderedDict):
 
             # Case 1: all keys are related to node ids
             if set(value) == set(self):
-                for k, v in OrderedDict(self).items():
+                for k, v in self.items():
                     v[key] = value[k]
             # Case 2: all keys are node ids but there are less keys than nodes.
             elif len(set(value)) < len(set(self)) and \
                     set(value).issubset(set(self)):
-                for k, v in OrderedDict(self).items():
+                for k, v in self.items():
                     if k in value:
                         v[key] = value[k]
                     else:
@@ -1952,27 +1952,27 @@ class NodeDict(OrderedDict):
             # Case 3: all keys are node ids but there a more keys than nodes.
             elif len(set(value)) > len(set(self)) and \
                     set(self).issubset(set(value)):
-                for k, v in OrderedDict(self).items():
+                for k, v in self.items():
                     v[key] = value[k]
                 log.warn('More node ids are defined as in the network '
                          'available!')
             # Case 4: keys are not equal to node ids
             else:
-                for k, v in OrderedDict(self).items():
+                for k, v in self.items():
                     v[key] = value
         else:
-            for k, v in OrderedDict(self).items():
+            for k, v in self.items():
                 v[key] = value
 
     @property
     def last(self):
         """Returns the last node added to the network."""
-        return next(reversed(OrderedDict(self)))
+        return next(reversed(self))
 
     @property
     def first(self):
         """Returns the first node added to the network."""
-        return next(iter(OrderedDict(self)))
+        return next(iter(self))
 
     @property
     def directed(self):
@@ -1987,7 +1987,7 @@ class NodeDict(OrderedDict):
     def attributes(self):
         """Returns the list of all the nodes attributes in the network."""
         _attributes = set()
-        for v in OrderedDict(self).values():
+        for v in self.values():
             _attributes.update(list(v.attributes.keys()))
         return list(_attributes)
 
@@ -2013,7 +2013,7 @@ class NodeDict(OrderedDict):
         1
 
         """
-        return list(OrderedDict(self).keys()).index(idx)
+        return list(self.keys()).index(idx)
 
 
 class Edge(object):
@@ -2494,7 +2494,6 @@ class Node(object):
 
         """
         return deepcopy(self)
-
 
 # =============================================================================
 # eof
