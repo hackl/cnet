@@ -4,7 +4,7 @@
 # File      : matsim.py -- Convert matsim data to various other formats
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-08-15
-# Time-stamp: <Don 2018-08-16 15:24 juergen>
+# Time-stamp: <Don 2018-10-11 18:24 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -25,6 +25,9 @@ import gzip
 import csv
 from xml.dom.minidom import parse, parseString
 from itertools import groupby
+from collections import defaultdict
+import numpy as np
+
 
 import cnet as cn
 from cnet import logger
@@ -145,12 +148,22 @@ class MATSimConverter(object):
 
         return network
 
-    def paths(self, filename=None, prefix='', zfill=0, public_transport=False):
+    def paths(self, filename=None, network=None, prefix='', zfill=0,
+              public_transport=False, start_time=None, end_time=None,
+              edge_map=None):
         """Converting raw MATSim paths to cnet paths.
 
         """
         # initialize variables
         paths = []
+        P = cn.Paths()
+        # if network:
+        #     n2e = network.nodes_to_edges_map()
+
+        if start_time is None:
+            start_time = 0
+        if end_time is None:
+            end_time = float('inf')
 
         # check prefix
         prefix_n, prefix_e = self._check_prefix(prefix)
@@ -204,37 +217,57 @@ class MATSimConverter(object):
 
                 # if a new person_id is detected the data is stored as a path
                 if person_id != row[agent_id] or last_row:
-                    print(person_id)
-                    print(last_row)
+
                     # split the path if an action is performed in between
                     paths = self._split_paths(data)
-                    print(len(paths))
-                    print(paths)
-                    # if split is disabled add the paths together
-                    # if not self.split:
-                    #     temp_paths = []
-                    #     for p in paths:
-                    #         temp_paths = temp_paths + p
-                    #     paths = [temp_paths]
 
-                    # if a simplified network is used, paths are removed
-                    # according to the new topology
-                    # if self.simplify:
-                    #     #paths = self._simplify_paths(paths)
-                    #     log.error('>> TODO << Not yet supported :(')
-                    #     raise KeyError
-                    # for path in paths:
-                    #     # don't consider empty paths
-                    #     # if len(path) == 0:
-                    #     #     continue
-                    #     # p = self._create_path_from(path)
-                    #     # self.paths.add_path(p)
-                    #     print(path)
+                    for path in paths:
+                        times = []
+                        edges = []
+                        for e in path:
+                            if e['start_time'] >= start_time and \
+                               e['end_time'] <= end_time:
+                                times.append(e['start_time'])
+                                times.append(e['end_time'])
+                                edges.append(e['link'])
+
+                        if len(times) > 2:
+                            t0 = times[0]
+                            del times[0]
+                            del times[1::2]
+                            time = [t0] + times
+
+                        if edges:
+                            p = cn.Path(agent_id=person_id,
+                                        time=times[-1]-times[0])
+
+                            if edge_map:
+                                nodes = [edge_map[e] for e in edges]
+                                nodes = self.remove_duplicates(nodes)
+                                if len(nodes) > 1:
+                                    for i in range(len(nodes)-1):
+                                        e = network.edges[(nodes[i],
+                                                           nodes[i+1])]
+                                        p.add_edge(e)
+                            else:
+                                raise NotImplementedError
+
+                            if len(p) > 0:
+                                P.add_path(p)
+
                     # reset the local variables
                     data = []
                     person_id = row[agent_id]
 
-        print('xxxxx')
+        return P
+
+    @staticmethod
+    def remove_duplicates(sequence):
+        lst = [sequence[0]]
+        for i in range(1, len(sequence)):
+            if lst[-1] != sequence[i]:
+                lst.append(sequence[i])
+        return lst
 
     def _split_paths(self, data):
         """ Split the parts according to the trips taken."""
@@ -279,6 +312,44 @@ class MATSimConverter(object):
             # paths_list.append(path_list)
 
         return paths_dict  # paths_list,paths_dict
+
+    @staticmethod
+    def _simplify(network, prefix='', zfill=0):
+
+        # check prefix
+        if isinstance(prefix, tuple):
+            prefix_n = prefix[0]
+            prefix_e = prefix[1]
+        else:
+            prefix_n = prefix
+            prefix_e = prefix
+
+        edge_map = {}
+
+        e2n = network.edge_to_nodes_map()
+
+        edges = defaultdict(list)
+
+        l = list(network.edges)
+        for e in l:
+            v = e.split('_')
+            edges[v[0]].append(int(v[1]))
+
+        for i, e in edges.items():
+            e_u = str(i) + '_' + str(min(e))
+            e_w = str(i) + '_' + str(max(e))
+            u = e2n[e_u][0]
+            w = e2n[e_w][1]
+            m = np.median(e)
+
+            for j in e:
+                e_v = str(i) + '_' + str(j)
+                if j <= m:
+                    edge_map[e_v] = prefix_n + str(u).zfill(zfill)
+                else:
+                    edge_map[e_v] = prefix_n + str(w).zfill(zfill)
+
+        return edge_map
 
     @staticmethod
     def _check_prefix(prefix):
