@@ -4,7 +4,7 @@
 # File      : traffic_assignment.py -- Module for flow based traffic assignment
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-06-25
-# Time-stamp: <Don 2018-08-09 13:22 juergen>
+# Time-stamp: <Mit 2018-10-10 16:16 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -217,7 +217,6 @@ def msa(network, od_flow, limit=0.5, max_iter=float('inf'), enable_paths=True):
         for o in origins:
             for d in destinations:
                 cost, path = dijkstra(network, o, d)
-                #print(cost, path)
                 edges = [n2e[path[i], path[i+1]][0]
                          for i in range(len(path)-1)]
 

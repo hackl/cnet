@@ -4,7 +4,7 @@
 # File      : matsim.py -- Convert matsim data to various other formats
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-08-15
-# Time-stamp: <Mit 2018-08-15 17:00 juergen>
+# Time-stamp: <Don 2018-08-16 15:24 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -22,7 +22,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 import gzip
+import csv
 from xml.dom.minidom import parse, parseString
+from itertools import groupby
 
 import cnet as cn
 from cnet import logger
@@ -81,23 +83,15 @@ class MATSimConverter(object):
         network = cn.RoadNetwork(name=name, directed=True)
 
         # check prefix
-        if isinstance(prefix, tuple):
-            prefix_n = prefix[0]
-            prefix_e = prefix[1]
-        else:
-            prefix_n = prefix
-            prefix_e = prefix
+        prefix_n, prefix_e = self._check_prefix(prefix)
 
         # check the input file name
-        if self.filename is None and filename is None:
-            log.warn('No file name was defined,'
-                     'hence, no output was created!')
-            return None
-        elif filename is not None:
-            self.filename = filename
+        self._check_filename(filename)
 
         # check if file is compressed or not
-        if self.filename.endswith('.gz'):
+        if self.filename is None:
+            return None
+        elif self.filename.endswith('.gz'):
             f = gzip.open(filename)
             content = parseString(f.read())
 
@@ -150,6 +144,164 @@ class MATSimConverter(object):
             network.number_of_edges()))
 
         return network
+
+    def paths(self, filename=None, prefix='', zfill=0, public_transport=False):
+        """Converting raw MATSim paths to cnet paths.
+
+        """
+        # initialize variables
+        paths = []
+
+        # check prefix
+        prefix_n, prefix_e = self._check_prefix(prefix)
+
+        # check the input file name
+        self._check_filename(filename)
+
+        # check file
+        if self.filename is None:
+            return None
+        elif not self.filename.endswith('.csv'):
+            log.warn('The file must be in a ".csv" format.'
+                     'Please use correct file format. No output was created!')
+            return None
+
+        # load file and go through all lines
+        with open(self.filename) as f:
+            reader = csv.reader(f)
+            headers = next(reader, None)  # extract the headers
+
+            # get column number for agent ids and link ids
+            # TODO: find a more elegant method to do this
+            agent_id = headers.index('agentId')
+            link_id = headers.index('linkId')
+            event_id = headers.index('eventType')
+            activity_id = headers.index('actType')
+            t_id = headers.index('t')
+
+            # initialize the local variables
+            person_id = None
+            data = []
+
+            # iterate over the list
+            for last_row, row in self._is_last_row(reader):
+                # if disabled ignore public transport
+                if not public_transport:
+                    if row[agent_id][:3].isalpha():
+                        continue
+
+                # identify to which person the path is assigned to
+                if person_id is None:
+                    person_id = row[agent_id]
+
+                # add data to the person
+                if person_id == row[agent_id]:
+                    data.append({
+                        'link': str(row[link_id]),
+                        'event': str(row[event_id]),
+                        'time': float(row[t_id])
+                    })
+
+                # if a new person_id is detected the data is stored as a path
+                if person_id != row[agent_id] or last_row:
+                    print(person_id)
+                    print(last_row)
+                    # split the path if an action is performed in between
+                    paths = self._split_paths(data)
+                    print(len(paths))
+                    print(paths)
+                    # if split is disabled add the paths together
+                    # if not self.split:
+                    #     temp_paths = []
+                    #     for p in paths:
+                    #         temp_paths = temp_paths + p
+                    #     paths = [temp_paths]
+
+                    # if a simplified network is used, paths are removed
+                    # according to the new topology
+                    # if self.simplify:
+                    #     #paths = self._simplify_paths(paths)
+                    #     log.error('>> TODO << Not yet supported :(')
+                    #     raise KeyError
+                    # for path in paths:
+                    #     # don't consider empty paths
+                    #     # if len(path) == 0:
+                    #     #     continue
+                    #     # p = self._create_path_from(path)
+                    #     # self.paths.add_path(p)
+                    #     print(path)
+                    # reset the local variables
+                    data = []
+                    person_id = row[agent_id]
+
+        print('xxxxx')
+
+    def _split_paths(self, data):
+        """ Split the parts according to the trips taken."""
+        temp_path = []
+        for i in range(1, len(data)):
+            if (data[i-1]['event'] == "actend"
+                    or data[i-1]['event'] == "vehicle enters traffic") \
+                    and data[i]['event'] == "left link":
+                temp_path.append(data[i-1])
+                temp_path.append(data[i])
+            elif data[i]['event'] == "left link" \
+                    or data[i]['event'] == "entered link":
+                temp_path.append(data[i])
+            elif data[i-1]['event'] == "entered link" \
+                and (data[i]['event'] == "actstart"
+                     or data[i]['event'] == "vehicle leaves traffic"):
+                temp_path.append(data[i])
+                temp_path.append(None)
+        temp_paths = [list(group) for k, group in groupby(
+            temp_path, lambda x: x == None) if not k]
+
+        paths_dict = []
+        # paths_list = []
+        for p in temp_paths:
+            path_dict = []
+            # path_list = []
+            for i, n in enumerate(p):
+                if i == 0:
+                    continue
+                if (not p[i-1]['event'] == 'left link' and
+                        not p[i]['event'] == 'entered link'):
+
+                    node = n.copy()
+                    del node['time']
+                    del node['event']
+                    node['start_time'] = p[i-1]['time']
+                    node['end_time'] = p[i]['time']
+                    path_dict.append(node)
+                    # path_list.append(node['link'])
+
+            paths_dict.append(path_dict)
+            # paths_list.append(path_list)
+
+        return paths_dict  # paths_list,paths_dict
+
+    @staticmethod
+    def _check_prefix(prefix):
+        if isinstance(prefix, tuple):
+            return prefix[0], prefix[1]
+        else:
+            return prefix, prefix
+
+    def _check_filename(self, filename):
+        if self.filename is None and filename is None:
+            log.warn('No file name was defined,'
+                     'hence, no output was created!')
+            return None
+        elif filename is not None:
+            self.filename = filename
+
+    @staticmethod
+    def _is_last_row(itr):
+        old = next(itr)
+        for new in itr:
+            yield False, old
+            old = new
+        yield True, old
 
 # =============================================================================
 # eof

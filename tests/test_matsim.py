@@ -4,7 +4,7 @@
 # File      : test_matsim.py -- Test environment for the matsim converter
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-08-15
-# Time-stamp: <Mit 2018-08-15 16:57 juergen>
+# Time-stamp: <Don 2018-08-16 14:39 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -40,7 +40,13 @@ def test_network():
     network.summary()
 
 
-test_network()
+def test_paths():
+    msc = cnet.MATSimConverter()
+    paths = msc.paths('test_paths.csv')
+
+
+# test_network()
+test_paths()
 # =============================================================================
 # eof
 #

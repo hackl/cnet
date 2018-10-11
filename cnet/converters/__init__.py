@@ -4,7 +4,7 @@
 # File      : __init__.py -- init file
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-20
-# Time-stamp: <Mit 2018-08-15 14:28 juergen>
+# Time-stamp: <Mit 2018-10-10 12:10 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -24,6 +24,7 @@
 
 from .tntp import TNTPConverter
 from .matsim import MATSimConverter
+from .gis import SHPConverter
 
 # =============================================================================
 # eof
