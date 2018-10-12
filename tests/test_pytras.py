@@ -4,7 +4,7 @@
 # File      : test_pytras.py -- Test environment for the pytras converter
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-10-11
-# Time-stamp: <Don 2018-10-11 14:35 juergen>
+# Time-stamp: <Fre 2018-10-12 11:01 juergen>
 #
 #
 # This program is free software: you can redistribute it and/or modify
@@ -148,6 +148,8 @@ def test_network():
                           node_map=node_map, edge_map=edge_map)
     network.summary()
 
+    network.save('ref_network.pkl')
+
 
 def test_paths():
     ptc = cnet.PytrasConverter()
@@ -156,16 +158,16 @@ def test_paths():
 
     paths = ptc.paths(filepath + 'paths.pkl', network=network)
 
-    print(len(paths))
-    s = 0
-    for p in paths:
-        s += p['flow']
+    # print(len(paths))
+    # s = 0
+    # for p in paths:
+    #     s += p['flow']
 
-    print(s)
+    # print(s)
 
 
-# test_network()
-test_paths()
+test_network()
+# test_paths()
 # =============================================================================
 # eof
 #

@@ -4,7 +4,7 @@
 # File      : gis.py -- Convert gis data to various other formats
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-10-10
-# Time-stamp: <Mit 2018-10-10 16:50 juergen>
+# Time-stamp: <Fre 2018-10-12 16:53 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -116,7 +116,7 @@ class SHPConverter(object):
 
             # TODO: Make labeling more dynamical
             # TODO: Add default values for all attributes
-            id = prefix_e + e.get('name', str(i)).zfill(zfill)
+            id = prefix_e + str(e.get('name', i)).zfill(zfill)
             c = e.get('capacity')
             l = e.get('length')
             sl = e.get('speedlimit')

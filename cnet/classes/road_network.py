@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : road_network.py
 # Creation  : 03 May 2018
-# Time-stamp: <Sam 2018-07-21 11:49 juergen>
+# Time-stamp: <Fre 2018-10-12 11:16 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -247,7 +247,7 @@ class RoadEdge(SpatialEdge):
 
     """
 
-    def __init__(self, id, u, v, alpha=ALPHA, beta=BETA, **attr):
+    def __init__(self, id, u, v, **attr):
         """Initialize the road edge object.
         Parameters
         ----------
@@ -359,10 +359,19 @@ class RoadEdge(SpatialEdge):
         SpatialEdge.__init__(self, id, u, v, **attr)
 
         # initialize the parameters
-        self._alpha = alpha
-        self._beta = beta
-        self._volume = 0
-        self._cost = float('inf')
+        if not 'alpha' in self.attributes:
+            self.attributes['alpha'] = ALPHA
+        if not 'beta' in self.attributes:
+            self.attributes['beta'] = BETA
+        if not 'volume' in self.attributes:
+            self.attributes['volume'] = 0
+        if not 'cost' in self.attributes:
+            self.attributes['cost'] = float('inf')
+
+        # self._alpha = alpha
+        # self._beta = beta
+        # self._volume = 0
+        # self._cost = float('inf')
 
         # check the input
         if not 'capacity' in self.attributes:
@@ -384,22 +393,22 @@ class RoadEdge(SpatialEdge):
     @property
     def alpha(self):
         """Returns the alpha parameter for the BPR function."""
-        return self._alpha
+        return self.attributes['alpha']
 
     @alpha.setter
     def alpha(self, alpha):
         """Change the alpha parameter for the BPR function."""
-        self._alpha = alpha
+        self.attributes['alpha'] = alpha
 
     @property
     def beta(self):
         """Returns the beta parameter for the BPR function."""
-        return self._beta
+        return self.attributes['beta']
 
     @beta.setter
     def beta(self, beta):
         """Change the alpha parameter for the BPR function."""
-        self._beta = beta
+        self.attributes['beta'] = beta
 
     @property
     def free_flow_time(self):
@@ -429,22 +438,22 @@ class RoadEdge(SpatialEdge):
     @property
     def cost(self):
         """Returns the cost of using the edge."""
-        return self._cost
+        return self.attributes['cost']
 
     @cost.setter
     def cost(self, cost):
         """Change the cost of using the edge."""
-        self._cost = cost
+        self.attributes['cost'] = cost
 
     @property
     def volume(self):
         """Returns the traffic volume of the edge."""
-        return self._volume
+        return self.attributes['volume']
 
     @volume.setter
     def volume(self, volume):
         """Change the traffic volume of the edge."""
-        self._volume = volume
+        self.attributes['volume'] = volume
 
     def weight(self, weight='weight', mode='BPR'):
         """Returns the weight of the edge.

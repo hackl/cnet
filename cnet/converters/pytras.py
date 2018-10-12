@@ -4,7 +4,7 @@
 # File      : pytras.py -- Converts pytras data to various other formats
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-10-11
-# Time-stamp: <Don 2018-10-11 15:07 juergen>
+# Time-stamp: <Fre 2018-10-12 13:40 juergen>
 #
 #
 # This program is free software: you can redistribute it and/or modify
@@ -46,7 +46,7 @@ class PytrasConverter(object):
     def __init__(self):
         pass
 
-    def network(self, filename, node_map=None, edge_map=None, name='pytras', prefix='', zfill=0):
+    def network(self, filename, network=None, name='pytras', prefix='', zfill=0):
         """Generate a cnet network from tntp file.
 
         Parameters
@@ -78,13 +78,20 @@ class PytrasConverter(object):
 
         """
         # initialize variables
+        reference = network
         network = cn.RoadNetwork(name=name, directed=True)
 
         # load file content
         # TODO: check file
-        if filename is not None:
-            if filename.endswith('.pkl'):
-                content = pickle.load(open(filename, "rb"))
+        if filename is None:
+            return None
+        elif isinstance(filename, list):
+            content = filename
+        elif filename.endswith('.pkl'):
+            content = pickle.load(open(filename, "rb"))
+        else:
+            log.error('This option is not yet supported!')
+            raise NotImplementedError
 
         # check prefix
         if isinstance(prefix, tuple):
@@ -96,31 +103,32 @@ class PytrasConverter(object):
 
         nodes = {}
 
-        if node_map is not None:
-            nodes = node_map
-
+        if reference is not None:
+            nodes = reference.coordinates_to_nodes_map()
+            n2e = reference.nodes_to_edges_map()
         for i, line in enumerate(content):
             p1 = line[0]
             p2 = line[1]
 
-            j = len(nodes)+1
-            if not p1 in nodes:
-                nodes[p1] = prefix_n + str(j).zfill(zfill)
+            if reference is None:
+                j = len(nodes)+1
+                if not p1 in nodes:
+                    nodes[p1] = prefix_n + str(j).zfill(zfill)
 
-            j = len(nodes)+1
-            if not p2 in nodes:
-                nodes[p2] = prefix_n + str(j).zfill(zfill)
+                j = len(nodes)+1
+                if not p2 in nodes:
+                    nodes[p2] = prefix_n + str(j).zfill(zfill)
 
-            u = nodes[p1]
-            v = nodes[p2]
+            u = nodes[p1][0]
+            v = nodes[p2][0]
             e = line[2]
 
             # TODO: Make labeling more dynamical
             # TODO: Add default values for all attributes
-            if edge_map is None:
+            if reference is None:
                 id = prefix_e + e.get('name', str(i)).zfill(zfill)
             else:
-                id = edge_map[(u, v)]
+                id = n2e[(u, v)][0]
             c = e.get('capacity')
             l = e.get('length')/1000
             sl = e.get('speedlimit')
@@ -139,7 +147,7 @@ class PytrasConverter(object):
 
         return network
 
-    def paths(self, filename=None, network=None):
+    def paths(self, filename=None, network=None, name=''):
         """Converting raw pytras paths to cnet paths.
 
         Parameters
@@ -155,17 +163,22 @@ class PytrasConverter(object):
 
         """
         # initialize variables
-        P = cn.Paths()
+        P = cn.Paths(name=name)
         # load file content
         # TODO: check file
-        if filename is not None:
-            if filename.endswith('.pkl'):
-                content = pickle.load(open(filename, "rb"))
+        if filename is None:
+            return None
+        elif isinstance(filename, list):
+            content = filename
+        elif filename.endswith('.pkl'):
+            content = pickle.load(open(filename, "rb"))
+        else:
+            log.error('This option is not yet supported!')
+            raise NotImplementedError
 
         # initialze maps from the network
         n2e = network.nodes_to_edges_map()
-        # TODO: add this mapping function to the spatial network class
-        c2n = {(u.x, u.y): u.id for u in network.nodes()}
+        c2n = network.coordinates_to_nodes_map()
 
         # TODO: check content
         for line in content:
@@ -174,7 +187,7 @@ class PytrasConverter(object):
 
             path = line.get('path')
             for i in range(len(path)-1):
-                e_id = n2e[(c2n[path[i]], c2n[path[i+1]])][0]
+                e_id = n2e[(c2n[path[i]][0], c2n[path[i+1]][0])][0]
                 p.add_edge(network.edges[e_id])
 
             P.add_path(p)

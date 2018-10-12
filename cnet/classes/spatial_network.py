@@ -3,7 +3,7 @@
 # =============================================================================
 # File      : spatialnetwork.py
 # Creation  : 01 May 2018
-# Time-stamp: <Mit 2018-07-25 12:38 juergen>
+# Time-stamp: <Fre 2018-10-12 12:18 juergen>
 #
 # Copyright (c) 2018 Jürgen Hackl <hackl@ibi.baug.ethz.ch>
 #               http://www.ibi.ethz.ch
@@ -25,6 +25,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
+from collections import defaultdict
 from cnet.classes.network import Node, Edge, Network
 from cnet.classes.paths import Path
 
@@ -98,6 +99,33 @@ class SpatialNetwork(Network):
     def _edge_class(self):
         """Internal function to assign different Edge classes."""
         self.EdgeClass = SpatialEdge
+
+    def coordinates_to_nodes_map(self):
+        """Returns a dictionary which maps the node coordinates to associated node
+        ids.
+
+        This method has the coordinate tuple e.g. (x,y) as a key. Since multiple
+        nodes are allowed, a coordinate tuple can be corresponding to multiple nodes.
+
+        Returns
+        -------
+        map : dict
+           Returns a dict where the key is a tuple of coordinates and the values
+           are a list of node ids which are associated with these nodes.
+
+        Example
+        -------
+        >>> net = cn.SpatialNetwork()
+        >>> net.add_node(cn.SpatialNode('a', x=3, y=3))
+        >>> net.add_node(cn.SpatialNode('b', x=1, y=1))
+        >>> net.coordinates_to_nodes_map()
+        {(1, 1): ['b'], (3, 3):['a']}
+
+        """
+        _dict = defaultdict(list)
+        for n in self.nodes():
+            _dict[(n.x, n.y)].append(n.id)
+        return _dict
 
 
 class SpatialEdge(Edge):

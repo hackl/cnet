@@ -4,7 +4,7 @@
 # File      : matsim.py -- Convert matsim data to various other formats
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-08-15
-# Time-stamp: <Don 2018-10-11 18:24 juergen>
+# Time-stamp: <Fre 2018-10-12 08:25 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -224,12 +224,27 @@ class MATSimConverter(object):
                     for path in paths:
                         times = []
                         edges = []
+                        _considered = False
+
+                        # consider paths which have a node within the time
+                        # intervall
                         for e in path:
-                            if e['start_time'] >= start_time and \
-                               e['end_time'] <= end_time:
+                            if start_time <= e['start_time'] <= end_time or \
+                               start_time <= e['end_time'] <= end_time:
+                                _considered = True
+                        if _considered:
+                            for e in path:
                                 times.append(e['start_time'])
                                 times.append(e['end_time'])
                                 edges.append(e['link'])
+
+                        # # consider only sub-paths within the time intervall
+                        # for e in path:
+                        #     if e['start_time'] >= start_time and \
+                        #        e['end_time'] <= end_time:
+                        #         times.append(e['start_time'])
+                        #         times.append(e['end_time'])
+                        #         edges.append(e['link'])
 
                         if len(times) > 2:
                             t0 = times[0]
@@ -239,7 +254,8 @@ class MATSimConverter(object):
 
                         if edges:
                             p = cn.Path(agent_id=person_id,
-                                        time=times[-1]-times[0])
+                                        time=times[-1]-times[0],
+                                        times=times)
 
                             if edge_map:
                                 nodes = [edge_map[e] for e in edges]

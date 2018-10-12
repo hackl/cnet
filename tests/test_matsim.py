@@ -4,7 +4,7 @@
 # File      : test_matsim.py -- Test environment for the matsim converter
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-08-15
-# Time-stamp: <Don 2018-10-11 18:25 juergen>
+# Time-stamp: <Fre 2018-10-12 08:46 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -40,21 +40,6 @@ def test_network():
     network = msc.network(filepath + 'network.xml.gz')
     network.summary()
 
-    print(msc._simplify(network))
-
-    #     v = e2n[e_v][0]
-    #     _, sp_u = cnet.algorithms.dijkstra(network, u, v)
-    #     _, sp_w = cnet.algorithms.dijkstra(network, v, w)
-
-    #     if len(sp_u) <= len(sp_w):
-    #         edge_map[e_v] = e_u
-    #     else:
-    #         edge_map[e_v] = e_w
-    #     print(e_v, len(sp_u), len(sp_w), edge_map[e_v])
-
-    # l.sort()
-    # print(l)
-
 
 def test_paths():
     msc = cnet.MATSimConverter()
@@ -63,15 +48,13 @@ def test_paths():
     edge_map = msc._simplify(network, prefix='N', zfill=2)
 
     network = cnet.RoadNetwork.load(filepath + 'network.pkl')
-    # paths = msc.paths(filepath + 'paths.csv', network=network,
-    #                   start_time=39650, end_time=39860, edge_map=edge_map)
+    paths = msc.paths(filepath + 'paths.csv', network=network,
+                      start_time=39650, end_time=39860, edge_map=edge_map)
 
-    paths = msc.paths(filepath + 'paths.csv',
-                      network=network, edge_map=edge_map)
+    # paths = msc.paths(filepath + 'paths.csv',
+    #                   network=network, edge_map=edge_map)
 
     paths.summary()
-    for p in paths:
-        print(p['agent_id'], p['time']/60)
 
 
 # test_network()
