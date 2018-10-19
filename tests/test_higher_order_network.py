@@ -4,7 +4,7 @@
 # File      : test_higher_order_network.py -- Test environment for HONs
 # Author    : Juergen Hackl <hackl@ibi.baug.ethz.ch>
 # Creation  : 2018-07-25
-# Time-stamp: <Fre 2018-07-27 14:46 juergen>
+# Time-stamp: <Fre 2018-10-19 10:42 juergen>
 #
 # Copyright (c) 2018 Juergen Hackl <hackl@ibi.baug.ethz.ch>
 #
@@ -25,90 +25,83 @@
 import pytest
 import os
 import sys
+from network2tikz import plot as tikz
 
 wk_dir = os.path.dirname(os.path.realpath('__file__'))
 sys.path.insert(0, os.path.abspath(os.path.join(wk_dir, '..')))
 import cnet as cn
-from cnet.classes.higher_order_network import (HigherOrderNetwork, NodeAndPath)
-from cnet.classes.path_network import PathEdge, PathNode, PathNetwork
+from cnet.classes.higher_order_network import HigherOrderNetwork
 
 
-def test_higher_order_network():
+@pytest.fixture  # (params=[True,False])
+def net():
 
-    # a = HigherOrderNetwork('a')
-    # b = HigherOrderNetwork('b', color='blue')
-    # N = HigherOrderNetwork('N')
+    net = cn.Network(directed=True)
+    net.add_node('a', x=0, y=0)
+    net.add_node('b', x=4000, y=3000)
+    net.add_node('c', x=8000, y=0)
+    net.add_node('d', x=4000, y=7000)
+    net.add_node('e', x=8000, y=10000)
+    net.add_node('f', x=4000, y=10000)
+    net.add_node('g', x=0, y=10000)
 
-    # N.add_edge('ab', a, b)
-    # N.nodes['a'].add_node(b)
-    # print(N.nodes['a'].nodes['b']['color'])
-    # b['color'] = 'red'
-    # print(N.nodes['a'].nodes['b']['color'])
-    # print('dddddddddd')
-    # print(N.id)
-    # print(N)
-    # print(N.name)
+    net.add_edge('ab', 'a', 'b', color='red')
+    net.add_edge('ac', 'a', 'c', color='red')
+    net.add_edge('bc', 'b', 'c', color='red')
+    net.add_edge('bd', 'b', 'd', color='red')
+    net.add_edge('de', 'd', 'e', color='red')
+    net.add_edge('df', 'd', 'f', color='red')
+    net.add_edge('dg', 'd', 'g', color='red')
+    net.add_edge('ef', 'e', 'f', color='red')
+    net.add_edge('fg', 'f', 'g', color='red')
+    return net
 
-    # p1 = cn.Path(['a', 'b', 'c'])
-    # p2 = cn.Path(['a', 'b'])
-    # ac = HigherOrderPathNetwork('ac', p1)
-    # ab = HigherOrderPathNetwork('ab', p2)
 
-    # net = HigherOrderPathNetwork('net', p1)
-    # net.add_node(ab)
-    # net.add_node(ac)
-    # net.add_edge(None, ab, ac)
-    # net.nodes['ab'].add_node(ac)
-    # net.summary()
+def test_higher_order_network(net):
+    #    net.summary()
+    layout = {
+        'a': (0, 0),
+        'b': (4000, 3000),
+        'c': (8000, 0),
+        'd': (4000, 7000),
+        'e': (8000, 10000),
+        'f': (4000, 10000),
+        'g': (0, 10000)}
+
+    tikz(net, layout=layout, node_label_as_id=True)
+    hon = HigherOrderNetwork(net, k=2)
+    hon.summary()
+
+    layout = {
+        'ac': (0, 1),
+        'ab': (1, 0),
+        'bc': (1, 2),
+        'bd': (2, 1),
+        'de': (3, 2),
+        'df': (3.5, 1),
+        'dg': (3, 0),
+        'ef': (4, 2),
+        'fg': (4, 0)}
+    tikz(hon, node_label_as_id=True, layout=layout)
+
+    # for n, a in hon.nodes(data=True):
+    #     print(n, a)
+    # tikz(hon, node_label_as_id=True, layout=layout)
+
+    # hon2 = HigherOrderNetwork(hon, k=1)
+    # hon2.summary()
+
+    hon3 = HigherOrderNetwork(net, k=3)
+    hon3.summary()
+
+    # # for n, a in hon2.nodes(data=True):
+    # #     print(n, a['edge'].u['edge'].u)
+
+    tikz(hon3, node_label_as_id=True, layout='fr')
     pass
 
 
-def test_path_and_node():
-    u = NodeAndPath('u', path=['a', 'b', 'c'])
-    assert u.id == 'u'
-    assert u.name == 'a-b-c'
-    assert u.path == ['a', 'b', 'c']
-    assert len(u) == 3
-
-    u.add_node('d')
-    assert u.id == 'u'
-    assert u.name == 'a-b-c-d'
-    assert u.path == ['a', 'b', 'c', 'd']
-    assert len(u) == 4
-
-    v = NodeAndPath(['a', 'b', 'c'])
-    assert v.id == 'a-b-c'
-    assert v.name == 'a-b-c'
-    assert v.path == ['a', 'b', 'c']
-    assert len(v) == 3
-
-    p = cn.Path(['a', 'b', 'c'], color='green')
-
-    u = NodeAndPath('u', path=p)
-    assert u.id == 'u'
-    assert u.name == 'a-b-c'
-    assert u.path == ['a', 'b', 'c']
-    assert len(u) == 3
-    assert u['color'] == 'green'
-
-    v = NodeAndPath(p)
-    assert v.id == 'a-b-c'
-    assert v.name == 'a-b-c'
-    assert v.path == ['a', 'b', 'c']
-    assert len(v) == 3
-    assert v['color'] == 'green'
-
-    w = NodeAndPath('w')
-    assert w.id == 'w'
-    assert w.name == ''
-    assert len(w) == 0
-
-    w = NodeAndPath('w', active=True)
-    assert w['active'] == True
-
-
-# test_higher_order_network()
-test_path_and_node()
+test_higher_order_network(net())
 # =============================================================================
 # eof
 #
